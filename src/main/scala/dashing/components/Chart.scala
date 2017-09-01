@@ -84,7 +84,8 @@ object Chart {
     .componentDidMount(scope => Callback {
       val ctx = scope.getDOMNode.asInstanceOf[HTMLCanvasElement].getContext("2d")
       scope.props.style match {
-        case LineChart => new JSChart(ctx, ChartConfiguration("line", scope.props.data))
+        case LineChart =>
+          new JSChart(ctx, ChartConfiguration("line", scope.props.data, ChartOptions(true)))
         case _         => throw new IllegalArgumentException
       }
     }).build

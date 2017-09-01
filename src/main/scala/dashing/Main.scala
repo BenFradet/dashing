@@ -5,6 +5,8 @@ import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router._
 
+import dashing.modules._
+
 object Main {
   sealed trait Dashboard
   case object MainDash extends Dashboard
@@ -12,7 +14,8 @@ object Main {
   val routerConfig = RouterConfigDsl[Dashboard].buildConfig { dsl =>
     import dsl._
     (emptyRule
-      | staticRoute(root, MainDash) ~> render(<.h1("Welcome!"))
+      //| staticRoute(root, MainDash) ~> render(<.h1("Welcome!"))
+      | staticRoute(root, MainDash) ~> renderR(ctl => Dashboard(ctl))
     ).notFound(redirectToPage(MainDash)(Redirect.Replace))
       .setTitle(p => s"Dashboard $p | Dashing")
       .renderWith(layout)
