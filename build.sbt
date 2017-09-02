@@ -43,6 +43,7 @@ lazy val dashing = project.in(file("."))
       "com.github.japgolly.scalajs-react" %%% "core" % scalajsReactVersion,
       "com.github.japgolly.scalajs-react" %%% "extra" % scalajsReactVersion
     ),
+    skip in packageJSDependencies := false,
     jsDependencies ++= Seq(
       "org.webjars.bower" % "react" % reactVersion
         /        "react-with-addons.js"
