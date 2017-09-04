@@ -1,8 +1,6 @@
-enablePlugins(ScalaJSPlugin)
-
 organization in ThisBuild := "com.github.benfradet"
 
-val compilerOptions = Seq(
+lazy val compilerOptions = Seq(
   "-deprecation",
   "-encoding", "UTF-8",
   "-feature",
@@ -23,7 +21,9 @@ lazy val baseSettings = Seq(
   },
   scalacOptions in (Test, console) ~= {
     _.filterNot(Set("-Ywarn-unused-import"))
-  }
+  },
+  scalaVersion := "2.12.3",
+  version := "0.1.0-SNAPSHOT"
 )
 
 lazy val scalajsDomVersion = "0.9.1"
@@ -31,19 +31,23 @@ lazy val scalajsReactVersion = "1.1.0"
 lazy val reactVersion = "15.6.1"
 lazy val chartjsVersion = "2.6.0"
 
-lazy val dashing = project.in(file("."))
+lazy val shared = (crossProject.crossType(CrossType.Pure).in(file("shared")))
+
+lazy val sharedJVM = shared.jvm.settings(name := "sharedJVM")
+lazy val sharedJS = shared.js.settings(name := "sharedJS")
+
+lazy val client = project.in(file("client"))
   .settings(baseSettings)
   .settings(
-    moduleName := "dashing",
-    scalaVersion := "2.12.3",
-    version := "0.1.0-SNAPSHOT",
+    name := "client",
     scalaJSUseMainModuleInitializer := true,
+    scalaJSUseMainModuleInitializer in Test := false,
+    skip in packageJSDependencies := false,
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % scalajsDomVersion,
       "com.github.japgolly.scalajs-react" %%% "core" % scalajsReactVersion,
       "com.github.japgolly.scalajs-react" %%% "extra" % scalajsReactVersion
     ),
-    skip in packageJSDependencies := false,
     jsDependencies ++= Seq(
       "org.webjars.bower" % "react" % reactVersion
         /        "react-with-addons.js"
@@ -58,4 +62,12 @@ lazy val dashing = project.in(file("."))
         /        "Chart.js"
         minified "Chart.min.js"
     )
+  )
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(sharedJS)
+
+lazy val server = project.in(file("server"))
+  .settings(baseSettings)
+  .settings(
+    name := "server"
   )

@@ -1,4 +1,4 @@
-package dashing
+package dashing.client
 
 import org.scalajs.dom
 import japgolly.scalajs.react._, vdom.html_<^._

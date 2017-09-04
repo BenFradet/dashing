@@ -1,4 +1,4 @@
-package dashing.modules
+package dashing.client.modules
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
