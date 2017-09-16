@@ -32,6 +32,7 @@ lazy val reactVersion = "15.6.1"
 lazy val chartjsVersion = "2.6.0"
 
 lazy val shared = (crossProject.crossType(CrossType.Pure).in(file("shared")))
+  .settings(baseSettings)
 
 lazy val sharedJVM = shared.jvm.settings(name := "sharedJVM")
 lazy val sharedJS = shared.js.settings(name := "sharedJS")

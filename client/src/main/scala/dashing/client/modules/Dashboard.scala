@@ -1,4 +1,5 @@
-package dashing.client.modules
+package dashing.client
+package modules
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -6,8 +7,8 @@ import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.util.Random
 
-import dashing.Main.Dashboard
-import dashing.components._
+import components._
+import model._
 
 object Dashboard {
   case class Props(router: RouterCtl[Dashboard])

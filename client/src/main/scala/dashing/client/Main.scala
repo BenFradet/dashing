@@ -5,11 +5,10 @@ import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router._
 
-import dashing.modules._
+import model._
+import modules._
 
 object Main {
-  sealed trait Dashboard
-  case object MainDash extends Dashboard
 
   val routerConfig = RouterConfigDsl[Dashboard].buildConfig { dsl =>
     import dsl._
