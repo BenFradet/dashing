@@ -26,16 +26,16 @@ lazy val baseSettings = Seq(
   version := "0.1.0-SNAPSHOT"
 )
 
-lazy val scalajsDomVersion = "0.9.1"
-lazy val scalajsReactVersion = "1.1.0"
-lazy val reactVersion = "15.6.1"
-lazy val chartjsVersion = "2.6.0"
-
 lazy val shared = (crossProject.crossType(CrossType.Pure).in(file("shared")))
   .settings(baseSettings)
 
 lazy val sharedJVM = shared.jvm.settings(name := "sharedJVM")
 lazy val sharedJS = shared.js.settings(name := "sharedJS")
+
+lazy val scalajsDomVersion = "0.9.1"
+lazy val scalajsReactVersion = "1.1.0"
+lazy val reactVersion = "15.6.1"
+lazy val chartjsVersion = "2.6.0"
 
 lazy val client = project.in(file("client"))
   .settings(baseSettings)
@@ -45,10 +45,10 @@ lazy val client = project.in(file("client"))
     scalaJSUseMainModuleInitializer in Test := false,
     skip in packageJSDependencies := false,
     libraryDependencies ++= Seq(
+      "com.github.japgolly.scalajs-react" %%% "core",
+      "com.github.japgolly.scalajs-react" %%% "extra"
+    ).map(_ % scalajsReactVersion) :+
       "org.scala-js" %%% "scalajs-dom" % scalajsDomVersion,
-      "com.github.japgolly.scalajs-react" %%% "core" % scalajsReactVersion,
-      "com.github.japgolly.scalajs-react" %%% "extra" % scalajsReactVersion
-    ),
     jsDependencies ++= Seq(
       "org.webjars.bower" % "react" % reactVersion
         /        "react-with-addons.js"
@@ -67,8 +67,19 @@ lazy val client = project.in(file("client"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(sharedJS)
 
+lazy val http4sVersion = "0.18.0-M1"
+lazy val specs2Version = "3.9.5"
+
 lazy val server = project.in(file("server"))
   .settings(baseSettings)
   .settings(
-    name := "server"
+    name := "server",
+    libraryDependencies ++= Seq(
+      "org.http4s" %% "http4s-dsl",
+      "org.http4s" %% "http4s-blaze-server"
+    ).map(_ % http4sVersion) ++ Seq(
+      "org.specs2" %% "specs2-core" % specs2Version,
+      "org.http4s" %% "http4s-testing" % http4sVersion
+    ).map(_ % "test")
   )
+  .dependsOn(sharedJVM)
