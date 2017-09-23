@@ -9,6 +9,7 @@ object Main extends StreamApp[IO] {
   override def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, Nothing] =
     BlazeBuilder[IO]
       .bindHttp(8080, "localhost")
-      .mountService(HelloService.service, "/")
+      .mountService(HelloService.service)
+      .mountService(RenderingService.service)
       .serve
 }

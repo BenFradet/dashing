@@ -69,6 +69,7 @@ lazy val client = project.in(file("client"))
 
 lazy val http4sVersion = "0.18.0-M1"
 lazy val specs2Version = "3.9.5"
+lazy val scalatagsVersion = "0.6.7"
 
 lazy val server = project.in(file("server"))
   .settings(baseSettings)
@@ -78,8 +79,21 @@ lazy val server = project.in(file("server"))
       "org.http4s" %% "http4s-dsl",
       "org.http4s" %% "http4s-blaze-server"
     ).map(_ % http4sVersion) ++ Seq(
+      "com.lihaoyi" %% "scalatags" % scalatagsVersion
+    ) ++ Seq(
       "org.specs2" %% "specs2-core" % specs2Version,
       "org.http4s" %% "http4s-testing" % http4sVersion
     ).map(_ % "test")
+  )
+  .settings(
+    // lets us access client-fastopt.js
+    resources in Compile += (fastOptJS in (client, Compile)).value.data,
+    // lets us access client-fastopt.js.map
+    resources in Compile += (fastOptJS in (client, Compile)).value
+      .map((f: File) => new File(f.getAbsolutePath + ".map"))
+      .data,
+    // lets us access client-jsdeps.js
+    (managedResources in Compile) +=
+      (artifactPath in (client, Compile, packageJSDependencies)).value
   )
   .dependsOn(sharedJVM)
