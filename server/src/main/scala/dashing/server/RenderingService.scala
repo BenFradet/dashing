@@ -37,4 +37,5 @@ object RenderingService extends Service {
     case req @ GET -> Root / path if List(".js", ".css", ".map", ".ico").exists(path.endsWith) =>
       static(path, req)
   }
+
 }
