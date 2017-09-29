@@ -11,5 +11,6 @@ object Main extends StreamApp[IO] {
       .bindHttp(8080, "localhost")
       .mountService(HelloService.service)
       .mountService(RenderingService.service)
+      .mountService(ApiService.service, "/api")
       .serve
 }
