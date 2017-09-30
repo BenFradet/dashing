@@ -69,9 +69,10 @@ lazy val client = project.in(file("client"))
 
 lazy val http4sVersion = "0.18.0-M1"
 lazy val github4sVersion = "0.16.0"
+lazy val circeVersion = "0.9.0-M1"
+lazy val scalatagsVersion = "0.6.7"
 lazy val logbackVersion = "1.2.3"
 lazy val specs2Version = "3.9.5"
-lazy val scalatagsVersion = "0.6.7"
 
 lazy val server = project.in(file("server"))
   .settings(baseSettings)
@@ -81,8 +82,12 @@ lazy val server = project.in(file("server"))
       "org.http4s" %% "http4s-dsl",
       "org.http4s" %% "http4s-blaze-server"
     ).map(_ % http4sVersion) ++ Seq(
-      "com.47deg" %% "github4s" % github4sVersion,
-      "com.47deg" %% "github4s-cats-effect" % github4sVersion,
+      "com.47deg" %% "github4s",
+      "com.47deg" %% "github4s-cats-effect"
+    ).map(_ % github4sVersion) ++ Seq(
+      "io.circe" %% "circe-core",
+      "io.circe" %% "circe-generic"
+    ).map(_ % circeVersion) ++ Seq(
       "com.lihaoyi" %% "scalatags" % scalatagsVersion,
       "ch.qos.logback" % "logback-classic" % logbackVersion
     ) ++ Seq(
