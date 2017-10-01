@@ -1,7 +1,7 @@
 package dashing.client.components
 
-import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ScalaComponent}
+import japgolly.scalajs.react.vdom.html_<^._
 
 import org.scalajs.dom.raw.HTMLCanvasElement
 import scala.scalajs.js
@@ -77,18 +77,28 @@ object Chart {
   case object LineChart extends ChartStyle
   case class ChartProps(name: String, style: ChartStyle, data: ChartData, width: Int, height: Int)
 
-  val Chart = ScalaComponent.builder[ChartProps]("Chart")
+  def draw(ctx: js.Dynamic, props: ChartProps): Callback = Callback {
+    props.style match {
+      case LineChart =>
+        new JSChart(ctx, ChartConfiguration("line", props.data, ChartOptions(true)))
+      case _ => throw new IllegalArgumentException
+    }
+  }
+
+  val chart = ScalaComponent.builder[ChartProps]("Chart")
     .render_P { p =>
       <.canvas(VdomAttr("width") := p.width, VdomAttr("height") := p.height)
     }
-    .componentDidMount(scope => Callback {
+    .componentDidMount { scope =>
+      // can't be factored out
       val ctx = scope.getDOMNode.asInstanceOf[HTMLCanvasElement].getContext("2d")
-      scope.props.style match {
-        case LineChart =>
-          new JSChart(ctx, ChartConfiguration("line", scope.props.data, ChartOptions(true)))
-        case _         => throw new IllegalArgumentException
-      }
-    }).build
+      draw(ctx, scope.props)
+    }
+    .componentWillReceiveProps { scope =>
+      val ctx = scope.getDOMNode.asInstanceOf[HTMLCanvasElement].getContext("2d")
+      draw(ctx, scope.nextProps)
+    }
+    .build
 
-  def apply(props: ChartProps) = Chart(props)
+  def apply(props: ChartProps) = chart(props)
 }

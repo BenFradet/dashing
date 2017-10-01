@@ -5,33 +5,46 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 
-import scala.util.Random
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import components._
 import model._
 
 object Dashboard {
-  case class Props(router: RouterCtl[Dashboard])
-
-  val cp = Chart.ChartProps(
-    "Test dash",
-    Chart.LineChart,
-    ChartData(
-      Random.alphanumeric.map(_.toUpper.toString).distinct.take(10),
-      Seq(ChartDataset(Iterator.continually(Random.nextDouble() * 10).take(10).toSeq, "Data 1"))
-    ),
-    500,
-    300
-  )
+  final case class Props(router: RouterCtl[Dashboard])
+  type State = Map[String, Int]
+  object State {
+    def empty: State = Map.empty[String, Int]
+  }
 
   private val component = ScalaComponent.builder[Props]("Dashboard")
-    .render_P { p =>
-      <.div(
+    .initialState(State.empty)
+    .renderBackend[DashboardBackend]
+    .componentDidMount(s => s.backend.updateStars("snowplow-docker"))
+    .build
+
+  final class DashboardBackend($: BackendScope[Props, State]) {
+
+    def updateStars(repo: String) = Callback.future {
+      Api.fetchStars(repo).map(s => $.setState(s))
+    }
+
+    def render(s: State) = {
+      <.div(^.cls := "container",
         <.h2("Dashboard"),
-        Chart(cp)
+        Chart(Chart.ChartProps(
+          "Stars",
+          Chart.LineChart,
+          ChartData(
+            s.keys.toSeq,
+            Seq(ChartDataset(s.values.map(_.toDouble).toSeq, "Stars"))
+          ),
+          500,
+          300
+        ))
       )
     }
-    .build
+  }
 
   def apply(router: RouterCtl[Dashboard]) = component(Props(router))
 }
