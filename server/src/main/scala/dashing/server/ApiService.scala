@@ -1,6 +1,8 @@
 package dashing.server
 
+import cats.data.EitherT
 import cats.effect.IO
+import cats.implicits._
 import github4s.Github
 import github4s.Github._
 import github4s.GithubResponses._
@@ -19,21 +21,29 @@ object ApiService extends Service {
   val org: Organization = "snowplow"
 
   override val service = HttpService[IO] {
-    case GET -> Root / "stars" / repo =>
-      getStars(org, repo)
-        .flatMap(_.fold(ex => NotFound(ex.getMessage), m => Ok(m.asJson.noSpaces)))
+    case GET -> Root / "stars" =>
+      getAllStars(org).flatMap(_.fold(ex => NotFound(ex.getMessage), m => Ok(m.asJson.noSpaces)))
   }
 
-  def getRepos(org: Organization): IO[Either[GHException, List[Repo]]] = for {
-    r <- gh.repos.listOrgRepos(org, Some("sources")).exec[IO, HttpResponse[String]]()
-    l = r.map(_.result.map(_.name))
-  } yield l
+  def getAllStars(org: Organization): IO[Either[GHException, Map[Repo, Map[String, Int]]]] = (for {
+    repos <- EitherT(getRepos(org))
+    stars <- EitherT(getStars(org, repos))
+  } yield stars).value
 
-  def getStars(org: Organization, repo: Repo): IO[Either[GHException, Map[String, Int]]] = for {
-    r <- gh.activities.listStargazers(org, repo, true).exec[IO, HttpResponse[String]]()
-    d = (for {
-      res <- r
-      stars = res.result
+  def getRepos(org: Organization): IO[Either[GHException, List[Repo]]] = (for {
+    repos <- EitherT(gh.repos.listOrgRepos(org, Some("sources")).exec[IO, HttpResponse[String]]())
+    repoNames = repos.result.map(_.name)
+  } yield repoNames).value
+
+  def getStars(org: Organization, repos: List[Repo]): IO[Either[GHException, Map[Repo, Map[String, Int]]]] =
+    repos.traverse(r => getStars(org, r))
+      .map(_.sequence.map(_.toMap))
+
+  def getStars2(org: Organization, repo: Repo): IO[Either[GHException, (Repo, Map[String, Int])]] =
+    (for {
+      stargazers <- EitherT(
+        gh.activities.listStargazers(org, repo, true).exec[IO, HttpResponse[String]]())
+      stars = repo -> stargazers.result
         .map(_.starred_at)
         .flatten
         .sorted
@@ -42,6 +52,22 @@ object ApiService extends Service {
             val cnt = m.getOrElse(dt, 1) + c
             (m + (dt -> cnt), cnt)
         }._1
-    } yield stars)
-  } yield d
+    } yield stars).value
+
+  def getStars(org: Organization, repo: Repo): IO[Either[GHException, (Repo, Map[String, Int])]] =
+    for {
+      r <- gh.activities.listStargazers(org, repo, true).exec[IO, HttpResponse[String]]()
+      d = (for {
+        res <- r
+        stars = res.result
+          .map(_.starred_at)
+          .flatten
+          .sorted
+          .foldLeft((Map.empty[String, Int], 0)) {
+            case ((m, c), dt) =>
+              val cnt = m.getOrElse(dt, 1) + c
+              (m + (dt -> cnt), cnt)
+          }._1
+      } yield repo -> stars)
+    } yield d
 }
