@@ -1,3 +1,5 @@
 package dashing
 
-package object shared {}
+package object shared {
+  final case class Repo(repoName: String, stars: Map[String, Int], maxStars: Int)
+}
