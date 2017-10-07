@@ -25,7 +25,7 @@ object Repo {
 
   implicit val repoMonoid: Monoid[Repo] = new Monoid[Repo] {
     def combine(r1: Repo, r2: Repo): Repo = Repo(
-      r1.repoName |+| r2.repoName, r1.starsTimeline |+| r2.starsTimeline, r1.stars |+| r2.stars)
+      r1.repoName, r1.starsTimeline |+| r2.starsTimeline, r1.stars |+| r2.stars)
 
     def empty: Repo = Repo("", Map.empty, 0)
   }
