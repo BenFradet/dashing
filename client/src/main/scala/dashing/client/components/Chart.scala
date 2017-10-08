@@ -20,14 +20,14 @@ object ChartDataset {
   def apply(
     data: Seq[Double],
     label: String,
-    backgroundColor: String = "#8080FF",
-    borderColor: String = "#408080"
+    borderColor: String = "#408080",
+    backgroundColor: String = "rgba(0, 0, 0, 0)"
   ): ChartDataset =
     js.Dynamic.literal(
       label = label,
       data = data.toJSArray,
-      backgroundColor = backgroundColor,
-      borderColor = borderColor
+      borderColor = borderColor,
+      backgroundColor = backgroundColor
     ).asInstanceOf[ChartDataset]
 }
 

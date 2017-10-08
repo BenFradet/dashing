@@ -12,29 +12,24 @@ import model._
 
 object HeroRepoDashboard {
   final case class Props(router: RouterCtl[Dashboard])
-  final case class HeroRepoDashboardState(
-    name: String, starsTimeline: List[(String, Int)], stars: Int)
-  object HeroRepoDashboardState {
-    def empty = HeroRepoDashboardState("", List.empty, 0)
-  }
 
   private val component = ScalaComponent.builder[Props]("Hero repo dashboard")
-    .initialState(HeroRepoDashboardState.empty)
+    .initialState(RepoState.empty)
     .renderBackend[DashboardBackend]
-    .componentDidMount(s => s.backend.updateStars("snowplow"))
+    .componentDidMount(s => s.backend.updateStars)
     .build
 
-  final class DashboardBackend($: BackendScope[Props, HeroRepoDashboardState]) {
+  final class DashboardBackend($: BackendScope[Props, RepoState]) {
 
-    def updateStars(repo: String) = Callback.future {
+    def updateStars = Callback.future {
       Api.fetchHeroRepoStars
         .map { r =>
           val timeline = r.starsTimeline.toList.sortBy(_._1)
-          $.setState(HeroRepoDashboardState(r.name, timeline, r.stars))
+          $.setState(RepoState(r.name, timeline, r.stars))
         }
     }
 
-    def render(s: HeroRepoDashboardState) = {
+    def render(s: RepoState) = {
       <.div(^.cls := "container",
         <.h2("Hero repo dashboard"),
         Chart(Chart.ChartProps(
@@ -42,7 +37,7 @@ object HeroRepoDashboard {
           Chart.LineChart,
           ChartData(
             s.starsTimeline.map(_._1),
-            Seq(ChartDataset(s.starsTimeline.map(_._2.toDouble), s"${s.name} stars"))
+            Seq(ChartDataset(s.starsTimeline.map(_._2.toDouble), s"${s.name} stars", "#0E0B16"))
           )
         ))
       )

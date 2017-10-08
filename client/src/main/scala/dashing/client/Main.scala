@@ -15,10 +15,11 @@ object Main {
     (emptyRule
       | staticRoute(root, Home) ~> render(home)
       | staticRoute("#hero-repo", HeroRepoDash) ~> renderR(ctl => HeroRepoDashboard(ctl))
+      | staticRoute("#topn-repos", TopNReposDash) ~> renderR(ctl => TopNReposDashboard(ctl))
     ).notFound(redirectToPage(Home)(Redirect.Replace))
       .setTitle(p => s"Dashboard $p | Dashing")
       .renderWith(layout)
-      .verify(Home, HeroRepoDash)
+      .verify(Home, HeroRepoDash, TopNReposDash)
   }
 
   val home =
@@ -29,6 +30,12 @@ object Main {
           <.p(
             <.a(^.href := "#hero-repo", "Hero repo stars:"),
             " stars timeline for the hero repository"
+          )
+        ),
+        <.li(
+          <.p(
+            <.a(^.href := "#topn-repos", "Top N repos stars:"),
+            " stars timeline for the top N repositories, hero repo excluded"
           )
         )
       )
@@ -54,7 +61,8 @@ object Main {
         <.ul(
           ^.cls := "navbar-header",
           nav("Home", Home),
-          nav("Hero repo stars", HeroRepoDash)
+          nav("Hero repo stars", HeroRepoDash),
+          nav("Top N repos stars", TopNReposDash)
         )
       )
     }
