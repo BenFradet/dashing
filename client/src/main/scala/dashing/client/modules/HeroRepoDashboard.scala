@@ -10,30 +10,31 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import components._
 import model._
 
-object HeroDashboard {
+object HeroRepoDashboard {
   final case class Props(router: RouterCtl[Dashboard])
-  final case class HeroDashboardState(name: String, starsTimeline: List[(String, Int)], stars: Int)
-  object HeroDashboardState {
-    def empty = HeroDashboardState("", List.empty, 0)
+  final case class HeroRepoDashboardState(
+    name: String, starsTimeline: List[(String, Int)], stars: Int)
+  object HeroRepoDashboardState {
+    def empty = HeroRepoDashboardState("", List.empty, 0)
   }
 
   private val component = ScalaComponent.builder[Props]("Hero repo dashboard")
-    .initialState(HeroDashboardState.empty)
+    .initialState(HeroRepoDashboardState.empty)
     .renderBackend[DashboardBackend]
     .componentDidMount(s => s.backend.updateStars("snowplow"))
     .build
 
-  final class DashboardBackend($: BackendScope[Props, HeroDashboardState]) {
+  final class DashboardBackend($: BackendScope[Props, HeroRepoDashboardState]) {
 
     def updateStars(repo: String) = Callback.future {
       Api.fetchHeroRepoStars(repo)
         .map { r =>
           val timeline = r.starsTimeline.toList.sortBy(_._1)
-          $.setState(HeroDashboardState(r.name, timeline, r.stars))
+          $.setState(HeroRepoDashboardState(r.name, timeline, r.stars))
         }
     }
 
-    def render(s: HeroDashboardState) = {
+    def render(s: HeroRepoDashboardState) = {
       <.div(^.cls := "container",
         <.h2("Hero repo dashboard"),
         Chart(Chart.ChartProps(

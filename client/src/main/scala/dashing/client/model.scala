@@ -4,7 +4,8 @@ import scala.scalajs.js
 
 object model {
   sealed trait Dashboard
-  case object MainDash extends Dashboard
+  case object Home extends Dashboard
+  case object HeroRepoDash extends Dashboard
 
   @js.native
   trait Repo extends js.Object {

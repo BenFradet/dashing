@@ -13,13 +13,26 @@ object Main {
   val routerConfig = RouterConfigDsl[Dashboard].buildConfig { dsl =>
     import dsl._
     (emptyRule
-      //| staticRoute(root, MainDash) ~> render(<.h1("Welcome!"))
-      | staticRoute(root, MainDash) ~> renderR(ctl => HeroDashboard(ctl))
-    ).notFound(redirectToPage(MainDash)(Redirect.Replace))
+      | staticRoute(root, Home) ~> render(home)
+      | staticRoute("#hero-repo", HeroRepoDash) ~> renderR(ctl => HeroRepoDashboard(ctl))
+    ).notFound(redirectToPage(Home)(Redirect.Replace))
       .setTitle(p => s"Dashboard $p | Dashing")
       .renderWith(layout)
-      .verify(MainDash)
+      .verify(Home, HeroRepoDash)
   }
+
+  val home =
+    <.div(
+      <.h1("Welcome!"),
+      <.ul(
+        <.li(
+          <.p(
+            <.a(^.href := "#hero-repo", "Hero repo stars:"),
+            " stars timeline for the hero repository"
+          )
+        )
+      )
+    )
 
   def layout(c: RouterCtl[Dashboard], r: Resolution[Dashboard]) =
     <.div(
@@ -40,7 +53,8 @@ object Main {
         ^.cls := "navbar navbar-default",
         <.ul(
           ^.cls := "navbar-header",
-          nav("Home", MainDash)
+          nav("Home", Home),
+          nav("Hero repo stars", HeroRepoDash)
         )
       )
     }
