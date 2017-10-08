@@ -10,9 +10,7 @@ import model.Repo
 
 object Api {
 
-  def fetchHeroRepoStars(repo: String): Future[Repo] =
-    Ajax.get(starsUrl(repo))
+  def fetchHeroRepoStars: Future[Repo] =
+    Ajax.get("/api/stars/hero-repo")
       .map(xhr => JSON.parse(xhr.responseText).asInstanceOf[Repo])
-
-  val starsUrl = (repo: String) => s"/api/stars/$repo"
 }

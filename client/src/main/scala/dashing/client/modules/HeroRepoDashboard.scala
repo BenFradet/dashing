@@ -27,7 +27,7 @@ object HeroRepoDashboard {
   final class DashboardBackend($: BackendScope[Props, HeroRepoDashboardState]) {
 
     def updateStars(repo: String) = Callback.future {
-      Api.fetchHeroRepoStars(repo)
+      Api.fetchHeroRepoStars
         .map { r =>
           val timeline = r.starsTimeline.toList.sortBy(_._1)
           $.setState(HeroRepoDashboardState(r.name, timeline, r.stars))

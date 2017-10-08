@@ -26,9 +26,9 @@ object ApiService extends Service {
   val minStarsThreshold = 10
 
   override val service = HttpService[IO] {
-    case GET -> Root / "stars" => getTopN(org, topN, heroRepo, minStarsThreshold)
+    case GET -> Root / "stars" / "top-n" => getTopN(org, topN, heroRepo, minStarsThreshold)
       .flatMap(_.fold(ex => NotFound(ex.getMessage), l => Ok(l.asJson.noSpaces)))
-    case GET -> Root / "stars" / heroRepo => getStars(org, heroRepo)
+    case GET -> Root / "stars" / "hero-repo" => getStars(org, heroRepo)
       .flatMap(_.fold(ex => NotFound(ex.getMessage), r => Ok(r.asJson.noSpaces)))
   }
 
