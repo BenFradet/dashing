@@ -7,13 +7,17 @@ import org.http4s.testing.IOMatchers
 import org.specs2.mutable.Specification
 
 class ApiServiceSpec extends Specification with IOMatchers {
-  args(skipAll = true)
+  args(skipAll = sys.env.get("GITHUB4S_ACCESS_TOKEN").isEmpty)
 
   def serve(req: Request[IO]): Response[IO] = ApiService.service.orNotFound(req).unsafeRunSync
 
   "ApiService" should {
-    "respond to /stars" in {
-      val response = serve(Request(GET, Uri(path = "/stars")))
+    "respond to /stars/top-n" in {
+      val response = serve(Request(GET, Uri(path = "/stars/top-n")))
+      response.status must_== (Ok)
+    }
+    "respond to /stars/hero-repo" in {
+      val response = serve(Request(GET, Uri(path = "/stars/hero-repo")))
       response.status must_== (Ok)
     }
   }
