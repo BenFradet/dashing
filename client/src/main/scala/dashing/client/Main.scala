@@ -14,7 +14,7 @@ object Main {
     import dsl._
     (emptyRule
       //| staticRoute(root, MainDash) ~> render(<.h1("Welcome!"))
-      | staticRoute(root, MainDash) ~> renderR(ctl => Dashboard(ctl))
+      | staticRoute(root, MainDash) ~> renderR(ctl => HeroDashboard(ctl))
     ).notFound(redirectToPage(MainDash)(Redirect.Replace))
       .setTitle(p => s"Dashboard $p | Dashing")
       .renderWith(layout)

@@ -75,7 +75,7 @@ class JSChart(ctx: js.Dynamic, config: ChartConfiguration) extends js.Object
 object Chart {
   sealed trait ChartStyle
   case object LineChart extends ChartStyle
-  case class ChartProps(name: String, style: ChartStyle, data: ChartData, width: Int, height: Int)
+  case class ChartProps(name: String, style: ChartStyle, data: ChartData)
 
   def draw(ctx: js.Dynamic, props: ChartProps): Callback = Callback {
     props.style match {
@@ -87,7 +87,7 @@ object Chart {
 
   val chart = ScalaComponent.builder[ChartProps]("Chart")
     .render_P { p =>
-      <.canvas(VdomAttr("width") := p.width, VdomAttr("height") := p.height)
+      <.canvas(VdomAttr("width") := "100%", VdomAttr("height") := "60%")
     }
     .componentDidMount { scope =>
       // can't be factored out
