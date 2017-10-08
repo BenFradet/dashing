@@ -43,7 +43,7 @@ object ApiService extends Service {
     stars <- EitherT(getStars(org, repos))
     sorted = stars.sortBy(-_.stars)
     topN   = sorted.take(n)
-    rest   = Monoid.combineAll(sorted.drop(n)).copy(repoName = "others")
+    rest   = Monoid.combineAll(sorted.drop(n)).copy(name = "others")
   } yield rest :: topN).value
 
   def getRepos(org: String, minStarsThreshold: Int): IO[Either[GHException, List[String]]] = (for {
