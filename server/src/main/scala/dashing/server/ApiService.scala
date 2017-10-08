@@ -47,40 +47,27 @@ object ApiService extends Service {
   } yield rest :: topN).value
 
   def getRepos(org: String, minStarsThreshold: Int): IO[Either[GHException, List[String]]] = (for {
-    repos <- EitherT(gh.repos.listOrgRepos(org, Some("sources"), Some(Pagination(1, 100)))
-      .exec[IO, HttpResponse[String]]())
-    repoNames = repos.result
+    repos <- EitherT(utils.autoPaginate(p => listRepos(org, Some(p))))
+    repoNames = repos
       .filter(_.status.stargazers_count >= minStarsThreshold)
       .map(_.name)
   } yield repoNames).value
 
   def getStars(org: String, repoNames: List[String]): IO[Either[GHException, List[Repo]]] =
-    repoNames.traverse(r => getStars(org, r))
+    repoNames
+      .traverse(r => getStars(org, r))
       .map(_.sequence)
 
   def getStars(org: String, repoName: String): IO[Either[GHException, Repo]] = (for {
-    reposAndPages <- EitherT(getFirstPageStars(org, repoName))
-    otherPages <- EitherT(getPaginatedStars(org, repoName, reposAndPages._2))
-    allPages = Monoid.combineAll(reposAndPages._1 :: otherPages)
-  } yield allPages).value
+    stargazers <- EitherT(utils.autoPaginate(p => listStargazers(org, repoName, Some(p))))
+    repo = Repo(repoName, stargazers)
+  } yield repo).value
 
-  def getFirstPageStars(org: String, repoName: String): IO[Either[GHException, (Repo, List[Pagination])]] =
-    (for {
-      stargazers <- EitherT(listStargazers(org, repoName, Some(Pagination(1, 100))))
-      initial = Repo(repoName, stargazers.result)
-      paginations = utils.getNrPages(stargazers.headers).toList
-        .flatMap(2 to _)
-        .map(Pagination(_, 100))
-    } yield (initial, paginations)).value
-
-  def getPaginatedStars(
+  def listRepos(
     org: String,
-    repoName: String,
-    pags: List[Pagination]
-  ): IO[Either[GHException, List[Repo]]] = (for {
-    stargazers <- EitherT(pags.traverse(p => listStargazers(org, repoName, Some(p))).map(_.sequence))
-    repos = stargazers.map(s => Repo(repoName, s.result))
-  } yield repos).value
+    page: Option[Pagination]
+  ): IO[Either[GHException, GHResult[List[Repository]]]] =
+    gh.repos.listOrgRepos(org, Some("sources"), page).exec[IO, HttpResponse[String]]()
 
   def listStargazers(
     org: String,
