@@ -38,7 +38,7 @@ object ApiService extends Service {
     heroRepo: String,
     minStarsThreshold: Int
   ): IO[Either[GHException, List[Repo]]] = (for {
-    rs    <- EitherT(getRepos(org, minStarsThreshold))
+    rs    <- EitherT(getRepoNames(org, minStarsThreshold))
     repos  = rs.filter(_ != heroRepo)
     stars <- EitherT(getStars(org, repos))
     sorted = stars.sortBy(-_.stars)
@@ -46,7 +46,10 @@ object ApiService extends Service {
     rest   = Monoid.combineAll(sorted.drop(n)).copy(name = "others")
   } yield rest :: topN).value
 
-  def getRepos(org: String, minStarsThreshold: Int): IO[Either[GHException, List[String]]] = (for {
+  def getRepoNames(
+    org: String,
+    minStarsThreshold: Int
+  ): IO[Either[GHException, List[String]]] = (for {
     repos <- EitherT(utils.autoPaginate(p => listRepos(org, Some(p))))
     repoNames = repos
       .filter(_.status.stargazers_count >= minStarsThreshold)
