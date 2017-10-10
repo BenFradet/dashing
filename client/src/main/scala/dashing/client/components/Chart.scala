@@ -51,8 +51,10 @@ trait ChartOptions extends js.Object {
 }
 
 object ChartOptions {
-  def apply(responsive: Boolean): ChartOptions =
-    js.Dynamic.literal(responsive = responsive).asInstanceOf[ChartOptions]
+  def apply(title: String, responsive: Boolean): ChartOptions = {
+    val t = js.Dynamic.literal(display = true, text = title)
+    js.Dynamic.literal(responsive = responsive, title = t).asInstanceOf[ChartOptions]
+  }
 }
 
 @js.native
@@ -80,7 +82,7 @@ object Chart {
   def draw(ctx: js.Dynamic, props: ChartProps): Callback = Callback {
     props.style match {
       case LineChart =>
-        new JSChart(ctx, ChartConfiguration("line", props.data, ChartOptions(true)))
+        new JSChart(ctx, ChartConfiguration("line", props.data, ChartOptions(props.name, true)))
       case _ => throw new IllegalArgumentException
     }
   }

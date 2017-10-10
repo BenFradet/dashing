@@ -24,7 +24,7 @@ object Main {
 
   val home =
     <.div(
-      <.h1("Welcome!"),
+      <.h1("Dashing! Monitor your open source organization's health."),
       <.ul(
         <.li(
           <.p(

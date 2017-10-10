@@ -44,7 +44,7 @@ object TopNReposDashboard {
             s.zip(Stream.continually(colors).flatten).map { case (r, c) =>
               ChartDataset(
                 r.starsTimeline.map(_._2.toDouble),
-                s"${r.name} stars",
+                s"${r.name}",
                 c
               )
             }.toSeq
