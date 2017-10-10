@@ -23,9 +23,10 @@ object ApiService extends Service {
   val org = "snowplow"
   val heroRepo = "snowplow"
   val topN = 5
+  val minStarsThreshold = 10
 
   override val service = HttpService[IO] {
-    case GET -> Root / "stars" / "top-n" => getTopN(org, topN, heroRepo)
+    case GET -> Root / "stars" / "top-n" => getTopN(org, topN, heroRepo, minStarsThreshold)
       .flatMap(_.fold(ex => NotFound(ex.getMessage), l => Ok(l.asJson.noSpaces)))
     case GET -> Root / "stars" / "hero-repo" => getStars(org, heroRepo)
       .flatMap(_.fold(ex => NotFound(ex.getMessage), r => Ok(r.asJson.noSpaces)))
@@ -34,9 +35,10 @@ object ApiService extends Service {
   def getTopN(
     org: String,
     n: Int,
-    heroRepo: String
+    heroRepo: String,
+    minStarsThreshold: Int
   ): IO[Either[GHException, List[Repo]]] = (for {
-    rs    <- EitherT(getRepoNames(org))
+    rs    <- EitherT(getRepos(org, minStarsThreshold))
     repos  = rs.filter(_ != heroRepo)
     stars <- EitherT(getStars(org, repos))
     sorted = stars.sortBy(-_.stars)
@@ -44,9 +46,11 @@ object ApiService extends Service {
     rest   = Monoid.combineAll(sorted.drop(n)).copy(name = "others")
   } yield rest :: topN).value
 
-  def getRepoNames(org: String): IO[Either[GHException, List[String]]] = (for {
+  def getRepos(org: String, minStarsThreshold: Int): IO[Either[GHException, List[String]]] = (for {
     repos <- EitherT(utils.autoPaginate(p => listRepos(org, Some(p))))
-    repoNames = repos.map(_.name)
+    repoNames = repos
+      .filter(_.status.stargazers_count >= minStarsThreshold)
+      .map(_.name)
   } yield repoNames).value
 
   def getStars(org: String, repoNames: List[String]): IO[Either[GHException, List[Repo]]] =
