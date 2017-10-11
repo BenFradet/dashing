@@ -38,23 +38,16 @@ object StarsService extends Service {
     heroRepo: String,
     minStarsThreshold: Int
   ): IO[Either[GHException, List[Repo]]] = (for {
-    rs    <- EitherT(getRepoNames(org, minStarsThreshold))
-    repos  = rs.filter(_ != heroRepo)
+    rs    <- EitherT(utils.getRepos(gh, org))
+    repos  = rs
+      .filter(_.status.stargazers_count >= minStarsThreshold)
+      .map(_.name)
+      .filter(_ != heroRepo)
     stars <- EitherT(getStars(org, repos))
     sorted = stars.sortBy(-_.stars)
     topN   = sorted.take(n)
     rest   = Monoid.combineAll(sorted.drop(n)).copy(name = "others")
   } yield rest :: topN).value
-
-  def getRepoNames(
-    org: String,
-    minStarsThreshold: Int
-  ): IO[Either[GHException, List[String]]] = (for {
-    repos <- EitherT(utils.autoPaginate(p => listRepos(org, Some(p))))
-    repoNames = repos
-      .filter(_.status.stargazers_count >= minStarsThreshold)
-      .map(_.name)
-  } yield repoNames).value
 
   def getStars(org: String, repoNames: List[String]): IO[Either[GHException, List[Repo]]] =
     repoNames
@@ -65,12 +58,6 @@ object StarsService extends Service {
     stargazers <- EitherT(utils.autoPaginate(p => listStargazers(org, repoName, Some(p))))
     repo = Repo(repoName, stargazers)
   } yield repo).value
-
-  def listRepos(
-    org: String,
-    page: Option[Pagination]
-  ): IO[Either[GHException, GHResult[List[Repository]]]] =
-    gh.repos.listOrgRepos(org, Some("sources"), page).exec[IO, HttpResponse[String]]()
 
   def listStargazers(
     org: String,

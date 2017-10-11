@@ -3,13 +3,23 @@ package dashing.server
 import cats.data.EitherT
 import cats.effect.IO
 import cats.implicits._
+import github4s.Github
+import github4s.Github._
 import github4s.GithubResponses._
-import github4s.free.domain.Pagination
+import github4s.free.domain._
+import github4s.cats.effect.jvm.Implicits._
 import org.http4s.Uri
+import scalaj.http.HttpResponse
 
 import scala.util.Try
 
 object utils {
+
+  def getRepos(gh: Github, org: String): IO[Either[GHException, List[Repository]]] =
+    autoPaginate { p =>
+      gh.repos.listOrgRepos(org, Some("sources"), Some(p)).exec[IO, HttpResponse[String]]()
+    }
+
   def autoPaginate[T](
     call: Pagination => IO[Either[GHException, GHResult[List[T]]]]
   ): IO[Either[GHException, List[T]]] = (for {
