@@ -10,6 +10,6 @@ object Main extends StreamApp[IO] {
     BlazeBuilder[IO]
       .bindHttp(8080, "localhost")
       .mountService(RenderingService.service)
-      .mountService(ApiService.service, "/api")
+      .mountService(StarsService.service, "/api")
       .serve
 }

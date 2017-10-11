@@ -16,7 +16,7 @@ import org.http4s._
 import org.http4s.dsl._
 import scalaj.http.HttpResponse
 
-object ApiService extends Service {
+object StarsService extends Service {
 
   // config
   val gh = Github(sys.env.get("GITHUB4S_ACCESS_TOKEN"))

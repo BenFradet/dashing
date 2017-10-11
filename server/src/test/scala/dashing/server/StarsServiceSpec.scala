@@ -6,12 +6,12 @@ import org.http4s.dsl._
 import org.http4s.testing.IOMatchers
 import org.specs2.mutable.Specification
 
-class ApiServiceSpec extends Specification with IOMatchers {
+class StarsServiceSpec extends Specification with IOMatchers {
   args(skipAll = sys.env.get("GITHUB4S_ACCESS_TOKEN").isEmpty)
 
-  def serve(req: Request[IO]): Response[IO] = ApiService.service.orNotFound(req).unsafeRunSync
+  def serve(req: Request[IO]): Response[IO] = StarsService.service.orNotFound(req).unsafeRunSync
 
-  "ApiService" should {
+  "StarsService" should {
     "respond to /stars/top-n" in {
       val response = serve(Request(GET, Uri(path = "/stars/top-n")))
       response.status must_== (Ok)
