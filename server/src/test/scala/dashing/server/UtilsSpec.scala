@@ -1,8 +1,22 @@
 package dashing.server
 
+import cats.data.EitherT
+import github4s.Github
+import org.http4s.testing.Http4sMatchers
 import org.specs2.mutable.Specification
 
-class UtilsSpec extends Specification {
+class UtilsSpec extends Specification with Http4sMatchers {
+
+  "utils.getRepos" should {
+    val gh = Github(sys.env.get("GITHUB4S_ACCESS_TOKEN"))
+    "retrieve the list of repos in an org" in {
+      EitherT(utils.getRepos(gh, "igwp")).map(_.size) must returnRight(4)
+    }
+    "be a left if the org doesn't exist" in {
+      EitherT(utils.getRepos(gh, "notexist"))
+        .leftMap(_.getMessage.take(10)) must returnLeft("Failed inv")
+    }
+  }
 
   "utils.getNrPages" should {
     "retrieve the correct number of pages" in {
