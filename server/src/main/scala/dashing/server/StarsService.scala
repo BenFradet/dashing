@@ -13,7 +13,7 @@ import github4s.cats.effect.jvm.Implicits._
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.http4s._
-import org.http4s.dsl._
+import org.http4s.dsl.io._
 import scalaj.http.HttpResponse
 
 object StarsService extends Service {
