@@ -7,13 +7,24 @@ import org.specs2.mutable.Specification
 
 class UtilsSpec extends Specification with Http4sMatchers {
 
+  val gh = Github(sys.env.get("GITHUB4S_ACCESS_TOKEN"))
+
   "utils.getRepos" should {
-    val gh = Github(sys.env.get("GITHUB4S_ACCESS_TOKEN"))
     "retrieve the list of repos in an org" in {
       EitherT(utils.getRepos(gh, "igwp")).map(_.size) must returnRight(4)
     }
     "be a left if the org doesn't exist" in {
       EitherT(utils.getRepos(gh, "notexist"))
+        .leftMap(_.getMessage.take(10)) must returnLeft("Failed inv")
+    }
+  }
+
+  "utils.getOrgMembers" should {
+    "retrieve the list of repos in an org" in {
+      EitherT(utils.getOrgMembers(gh, "igwp")).map(_.size) must returnRight(2)
+    }
+    "be a left if the org doesn't exist" in {
+      EitherT(utils.getOrgMembers(gh, "notexist"))
         .leftMap(_.getMessage.take(10)) must returnLeft("Failed inv")
     }
   }
