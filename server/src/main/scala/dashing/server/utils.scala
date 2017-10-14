@@ -20,6 +20,13 @@ object utils {
       gh.repos.listOrgRepos(org, Some("sources"), Some(p)).exec[IO, HttpResponse[String]]()
     }
 
+  def getOrgMembers(gh: Github, org: String): IO[Either[GHException, List[String]]] = (for {
+    ms <- EitherT(autoPaginate { p =>
+      gh.organizations.listMembers(org, pagination = Some(p)).exec[IO, HttpResponse[String]]()
+    })
+    members = ms.map(_.login)
+  } yield members).value
+
   def autoPaginate[T](
     call: Pagination => IO[Either[GHException, GHResult[List[T]]]]
   ): IO[Either[GHException, List[T]]] = (for {
