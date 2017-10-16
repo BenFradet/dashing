@@ -68,5 +68,5 @@ object PullRequestsService extends Service {
     repoName: String,
     page: Option[Pagination]
   ): IO[Either[GHException, GHResult[List[PullRequest]]]] =
-    gh.pullRequests.list(org, repoName, List(PRFilterAll)).exec[IO, HttpResponse[String]]()
+    gh.pullRequests.list(org, repoName).exec[IO, HttpResponse[String]]()
 }
