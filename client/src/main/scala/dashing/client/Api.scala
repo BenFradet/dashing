@@ -7,7 +7,7 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSON
 
-import model.Repo
+import model.{Repo, Timeline}
 
 object Api {
 
@@ -19,4 +19,8 @@ object Api {
     Ajax.get("/api/stars/top-n")
       .map(xhr => JSON.parse(xhr.responseText).asInstanceOf[js.Array[Repo]])
       .map(_.toList)
+
+  def fetchPRs: Future[Timeline] =
+    Ajax.get("/api/prs")
+      .map(xhr => JSON.parse(xhr.responseText).asInstanceOf[Timeline])
 }
