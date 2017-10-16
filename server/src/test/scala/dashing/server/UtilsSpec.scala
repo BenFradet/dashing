@@ -21,7 +21,7 @@ class UtilsSpec extends Specification with Http4sMatchers {
 
   "utils.getOrgMembers" should {
     "retrieve the list of repos in an org" in {
-      EitherT(utils.getOrgMembers(gh, "igwp")).map(_.size) must returnRight(2)
+      EitherT(utils.getOrgMembers(gh, "igwp")).map(_.size) must returnRight(1)
     }
     "be a left if the org doesn't exist" in {
       EitherT(utils.getOrgMembers(gh, "notexist"))

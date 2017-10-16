@@ -14,6 +14,8 @@ import org.http4s._
 import org.http4s.dsl.io._
 import scalaj.http.HttpResponse
 
+import model.{GHObject, Timeline}
+
 object PullRequestsService extends Service {
 
   // config
@@ -25,10 +27,7 @@ object PullRequestsService extends Service {
       .flatMap(_.fold(ex => NotFound(ex.getMessage), t => Ok(t.asJson.noSpaces)))
   }
 
-  case class PR(author: String, created: String)
-  case class PRTimeline(members: Map[String, Int], nonMembers: Map[String, Int])
-
-  def getPRs(org: String): IO[Either[GHException, PRTimeline]] = (for {
+  def getPRs(org: String): IO[Either[GHException, Timeline]] = (for {
     repos <- EitherT(utils.getRepos(gh, org))
     repoNames = repos.map(_.name)
     prs <- EitherT(getPRs(org, repoNames))
@@ -36,9 +35,9 @@ object PullRequestsService extends Service {
     (prsByMember, prsByNonMember) = prs.partition(pr => members.toSet.contains(pr.author))
     memberPRsCounted = countPRs(prsByMember)
     nonMemberPRsCounted = countPRs(prsByNonMember)
-  } yield PRTimeline(memberPRsCounted, nonMemberPRsCounted)).value
+  } yield Timeline(memberPRsCounted, nonMemberPRsCounted)).value
 
-  def countPRs(prs: List[PR]): Map[String, Int] = prs
+  def countPRs(prs: List[GHObject]): Map[String, Int] = prs
     .map(_.created.take(7))
     .sorted
     .foldLeft((Map.empty[String, Int], 0)) {
@@ -47,7 +46,7 @@ object PullRequestsService extends Service {
         (m + (month -> cnt), cnt)
     }._1
 
-  def getPRs(org: String, repoNames: List[String]): IO[Either[GHException, List[PR]]] = (for {
+  def getPRs(org: String, repoNames: List[String]): IO[Either[GHException, List[GHObject]]] = (for {
     nested <- EitherT(
       repoNames
         .traverse(getPRs(org, _))
@@ -56,12 +55,12 @@ object PullRequestsService extends Service {
     flattened = nested.flatten
   } yield flattened).value
 
-  def getPRs(org: String, repoName: String): IO[Either[GHException, List[PR]]] = (for {
+  def getPRs(org: String, repoName: String): IO[Either[GHException, List[GHObject]]] = (for {
     prs <- EitherT(utils.autoPaginate(p => listPRs(org, repoName, Some(p))))
     pullRequests = prs
       .map(pr => (pr.user.map(_.login), pr.created_at.some).bisequence)
       .flatten
-      .map(pr => PR(pr._1, pr._2))
+      .map(pr => GHObject(pr._1, pr._2))
   } yield pullRequests).value
 
   def listPRs(
@@ -69,5 +68,5 @@ object PullRequestsService extends Service {
     repoName: String,
     page: Option[Pagination]
   ): IO[Either[GHException, GHResult[List[PullRequest]]]] =
-    gh.pullRequests.list(org, repoName).exec[IO, HttpResponse[String]]()
+    gh.pullRequests.list(org, repoName, List(PRFilterAll)).exec[IO, HttpResponse[String]]()
 }
