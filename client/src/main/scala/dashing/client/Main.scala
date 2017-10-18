@@ -41,7 +41,7 @@ object Main {
         ),
         <.li(
           <.p(
-            <.a(^.href := "#prs", "Opened PRs:"),
+            <.a(^.href := "#prs", "Open PRs:"),
             " opened by members and non-members"
           )
         )
@@ -70,7 +70,7 @@ object Main {
           nav("Home", Home),
           nav("Hero repo stars", HeroRepoDash),
           nav("Top N repos stars", TopNReposDash),
-          nav("Opened PRs", PRsDash)
+          nav("Open PRs", PRsDash)
         )
       )
     }

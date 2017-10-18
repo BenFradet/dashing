@@ -22,8 +22,9 @@ object PRsDashboard {
   final class DashboardBackend($: BackendScope[Props, GHObjectState]) {
 
     def updatePRs = Callback.future {
-      Api.fetchPRs
-        .map(t => $.setState(GHObjectState(t.members.toMap, t.nonMembers.toMap)))
+      Api.fetchPRs.map { t =>
+        $.setState(GHObjectState(t.members.toList.sortBy(_._1), t.nonMembers.toList.sortBy(_._1)))
+      }
     }
 
     def render(s: GHObjectState) = {
@@ -33,15 +34,15 @@ object PRsDashboard {
           s"Number of pull requests opened by members and non-members",
           Chart.LineChart,
           ChartData(
-            s.members.keys.toSeq,
+            s.members.map(_._1).toSeq,
             Seq(
               ChartDataset(
-                s.members.values.map(_.toDouble).toSeq,
+                s.members.map(_._2).map(_.toDouble).toSeq,
                 "opened by members",
                 "#D83F87"
               ),
               ChartDataset(
-                s.nonMembers.values.map(_.toDouble).toSeq,
+                s.nonMembers.map(_._2).map(_.toDouble).toSeq,
                 "opened by non-members",
                 "#2A1B3D"
               )

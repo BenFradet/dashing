@@ -27,8 +27,8 @@ object model {
     def nonMembers: js.Dictionary[Int]
   }
 
-  final case class GHObjectState(members: Map[String, Int], nonMembers: Map[String, Int])
+  final case class GHObjectState(members: List[(String, Int)], nonMembers: List[(String, Int)])
   object GHObjectState {
-    def empty = GHObjectState(Map.empty, Map.empty)
+    def empty = GHObjectState(List.empty, List.empty)
   }
 }
