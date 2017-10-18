@@ -27,6 +27,18 @@ object utils {
     members = ms.map(_.login)
   } yield members).value
 
+  def computeTimeline[T](timeline: List[T], counts: Map[T, Int]): List[(T, Int)] =
+    timeline.foldLeft((List.empty[(T, Int)], 0)) { case ((acc, cnt), e) =>
+      val c = counts.getOrElse(e, cnt)
+      ((e, c) :: acc, c)
+    }._1.reverse
+
+  def count[T](list: List[T]): Map[T, Int] =
+    list.foldLeft((Map.empty[T, Int], 0)) { case ((m, c), month) =>
+      val cnt = m.getOrElse(month, c) + 1
+      (m + (month -> cnt), cnt)
+    }._1
+
   def autoPaginate[T](
     call: Pagination => IO[Either[GHException, GHResult[List[T]]]]
   ): IO[Either[GHException, List[T]]] = (for {
