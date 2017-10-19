@@ -1,5 +1,7 @@
 package dashing.server
 
+import java.time.YearMonth
+
 import cats.data.EitherT
 import cats.effect.IO
 import cats.implicits._
@@ -27,7 +29,20 @@ object utils {
     members = ms.map(_.login)
   } yield members).value
 
-  def computeTimeline[T](timeline: List[T], counts: Map[T, Int]): List[(T, Int)] =
+  def computeTimeline(timeline: List[String]): List[(String, Int)] = (for {
+    min <- timeline.minimumOption
+    max <- timeline.maximumOption
+    minMonth <- Try(YearMonth.parse(min)).toOption
+    maxMonth <- Try(YearMonth.parse(max)).toOption
+    successiveMonths = Stream.iterate(minMonth)(_.plusMonths(1))
+      .takeWhile(!_.isAfter(maxMonth))
+      .toList
+      .map(_.toString)
+    counts = count(timeline)
+    filledTL = fillTimeline(successiveMonths, counts)
+  } yield filledTL).getOrElse(List.empty)
+
+  def fillTimeline[T](timeline: List[T], counts: Map[T, Int]): List[(T, Int)] =
     timeline.foldLeft((List.empty[(T, Int)], 0)) { case ((acc, cnt), e) =>
       val c = counts.getOrElse(e, cnt)
       ((e, c) :: acc, c)
