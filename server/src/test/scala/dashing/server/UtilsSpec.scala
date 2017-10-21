@@ -1,5 +1,7 @@
 package dashing.server
 
+import java.time.YearMonth
+
 import cats.data.EitherT
 import github4s.Github
 import org.http4s.testing.Http4sMatchers
@@ -26,6 +28,21 @@ class UtilsSpec extends Specification with Http4sMatchers {
     "be a left if the org doesn't exist" in {
       EitherT(utils.getOrgMembers(gh, "notexist"))
         .leftMap(_.getMessage.take(10)) must returnLeft("Failed inv")
+    }
+  }
+
+  "utils.getSuccessiveMonths" should {
+    "list all successive months between two dates" in {
+      utils.getSuccessiveMonths(YearMonth.of(2014, 5), YearMonth.of(2014, 6)) must_==
+        List(YearMonth.of(2014, 5), YearMonth.of(2014, 6))
+    }
+    "list all successive months if they aren't in chronological header" in {
+      utils.getSuccessiveMonths(YearMonth.of(2014, 6), YearMonth.of(2014, 5)) must_==
+        List(YearMonth.of(2014, 5), YearMonth.of(2014, 6))
+    }
+    "give back a list of one if both months are the same" in {
+      val ym = YearMonth.of(2014, 6)
+      utils.getSuccessiveMonths(ym, ym) must_== List(ym)
     }
   }
 

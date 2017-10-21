@@ -34,13 +34,17 @@ object utils {
     max <- timeline.maximumOption
     minMonth <- Try(YearMonth.parse(min)).toOption
     maxMonth <- Try(YearMonth.parse(max)).toOption
-    successiveMonths = Stream.iterate(minMonth)(_.plusMonths(1))
-      .takeWhile(!_.isAfter(maxMonth))
-      .toList
-      .map(_.toString)
+    successiveMonths = getSuccessiveMonths(minMonth, maxMonth).map(_.toString)
     counts = count(timeline)
     filledTL = fillTimeline(successiveMonths, counts)
   } yield filledTL).getOrElse(List.empty)
+
+  def getSuccessiveMonths(ym1: YearMonth, ym2: YearMonth): List[YearMonth] =
+    (if (ym1.isBefore(ym2)) {
+      Stream.iterate(ym1)(_.plusMonths(1)).takeWhile(!_.isAfter(ym2))
+    } else {
+      Stream.iterate(ym2)(_.plusMonths(1)).takeWhile(!_.isAfter(ym1))
+    }).toList
 
   def fillTimeline[T](timeline: List[T], counts: Map[T, Int]): List[(T, Int)] =
     timeline.foldLeft((List.empty[(T, Int)], 0)) { case ((acc, cnt), e) =>
