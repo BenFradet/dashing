@@ -22,12 +22,18 @@ object model {
   }
 
   @js.native
-  trait Timeline extends js.Object {
-    def members: js.Dictionary[Int]
-    def nonMembers: js.Dictionary[Int]
+  trait DataPoint extends js.Object {
+    def label: String
+    def value: Double
   }
 
-  final case class GHObjectState(members: List[(String, Int)], nonMembers: List[(String, Int)])
+  @js.native
+  trait Timeline extends js.Object {
+    def members: js.Array[DataPoint]
+    def nonMembers: js.Array[DataPoint]
+  }
+
+  final case class GHObjectState(members: List[DataPoint], nonMembers: List[DataPoint])
   object GHObjectState {
     def empty = GHObjectState(List.empty, List.empty)
   }

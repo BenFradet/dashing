@@ -33,5 +33,6 @@ object model {
   }
 
   case class GHObject(author: String, created: String)
-  case class Timeline(members: Map[String, Int], nonMembers: Map[String, Int])
+  case class DataPoint(label: String, value: Double)
+  case class Timeline(members: List[DataPoint], nonMembers: List[DataPoint])
 }

@@ -15,6 +15,8 @@ import scalaj.http.HttpResponse
 
 import scala.util.Try
 
+import model.DataPoint
+
 object utils {
 
   def getRepos(gh: Github, org: String): IO[Either[GHException, List[Repository]]] =
@@ -29,7 +31,7 @@ object utils {
     members = ms.map(_.login)
   } yield members).value
 
-  def computeTimeline(timeline: List[String]): List[(String, Int)] = (for {
+  def computeTimeline(timeline: List[String]): List[DataPoint] = (for {
     min <- timeline.minimumOption
     max <- timeline.maximumOption
     minMonth <- Try(YearMonth.parse(min)).toOption
@@ -37,7 +39,9 @@ object utils {
     successiveMonths = getSuccessiveMonths(minMonth, maxMonth).map(_.toString)
     counts = count(timeline)
     filledTL = fillTimeline(successiveMonths, counts)
-  } yield filledTL).getOrElse(List.empty)
+      .map(t => (t._1, t._2.toDouble))
+    dataPoints = filledTL.map(DataPoint.tupled)
+  } yield dataPoints).getOrElse(List.empty)
 
   def getSuccessiveMonths(ym1: YearMonth, ym2: YearMonth): List[YearMonth] =
     (if (ym1.isBefore(ym2)) {

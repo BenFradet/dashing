@@ -33,18 +33,9 @@ object PullRequestsService extends Service {
     prs <- EitherT(getPRs(org, repoNames))
     members <- EitherT(utils.getOrgMembers(gh, org))
     (prsByMember, prsByNonMember) = prs.partition(pr => members.toSet.contains(pr.author))
-    memberPRsCounted = countPRs(prsByMember)
-    nonMemberPRsCounted = countPRs(prsByNonMember)
+    memberPRsCounted = utils.computeTimeline(prsByMember.map(_.created.take(7)))
+    nonMemberPRsCounted = utils.computeTimeline(prsByNonMember.map(_.created.take(7)))
   } yield Timeline(memberPRsCounted, nonMemberPRsCounted)).value
-
-  def countPRs(prs: List[GHObject]): Map[String, Int] = prs
-    .map(_.created.take(7))
-    .sorted
-    .foldLeft((Map.empty[String, Int], 0)) {
-      case ((m, c), month) =>
-        val cnt = m.getOrElse(month, c) + 1
-        (m + (month -> cnt), cnt)
-    }._1
 
   def getPRs(org: String, repoNames: List[String]): IO[Either[GHException, List[GHObject]]] = (for {
     nested <- EitherT(

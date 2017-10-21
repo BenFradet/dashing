@@ -23,7 +23,7 @@ object PRsDashboard {
 
     def updatePRs = Callback.future {
       Api.fetchPRs.map { t =>
-        $.setState(GHObjectState(t.members.toList.sortBy(_._1), t.nonMembers.toList.sortBy(_._1)))
+        $.setState(GHObjectState(t.members.toList, t.nonMembers.toList))
       }
     }
 
@@ -34,15 +34,15 @@ object PRsDashboard {
           s"Number of pull requests opened by members and non-members",
           Chart.LineChart,
           ChartData(
-            s.members.map(_._1).toSeq,
+            s.members.map(_.label).toSeq,
             Seq(
               ChartDataset(
-                s.members.map(_._2).map(_.toDouble).toSeq,
+                s.members.map(_.value).toSeq,
                 "opened by members",
                 "#D83F87"
               ),
               ChartDataset(
-                s.nonMembers.map(_._2).map(_.toDouble).toSeq,
+                s.nonMembers.map(_.value).toSeq,
                 "opened by non-members",
                 "#2A1B3D"
               )
