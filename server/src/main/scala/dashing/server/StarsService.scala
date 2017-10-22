@@ -40,16 +40,20 @@ object StarsService extends Service {
     heroRepo: String,
     minStarsThreshold: Int
   ): IO[Either[GHException, List[Repo]]] = (for {
-    rs    <- EitherT(utils.getRepos(gh, org))
-    repos  = rs
+    rs <- EitherT(utils.getRepos(gh, org))
+    repos = rs
       .filter(_.status.stargazers_count >= minStarsThreshold)
       .map(_.name)
       .filter(_ != heroRepo)
     stars <- EitherT(getStars(org, repos))
     sorted = stars.sortBy(-_.stars)
-    topN   = sorted.take(n)
-    rest   = Monoid.combineAll(sorted.drop(n)).copy(name = "others")
-  } yield rest :: topN).value
+    topN = sorted.take(n)
+    othersCombined = Monoid.combineAll(sorted.drop(n))
+    others = othersCombined.copy(
+      name = "others",
+      starsTimeline = othersCombined.starsTimeline.sortBy(_.label)
+    )
+  } yield others :: topN).value
 
   def getStars(org: String, repoNames: List[String]): IO[Either[GHException, List[Repo]]] =
     repoNames
@@ -58,8 +62,10 @@ object StarsService extends Service {
 
   def getStars(org: String, repoName: String): IO[Either[GHException, Repo]] = (for {
     stargazers <- EitherT(utils.autoPaginate(p => listStargazers(org, repoName, Some(p))))
-    repo = Repo(repoName, stargazers)
-  } yield repo).value
+    // we keep only yyyy-mm
+    starTimestamps = stargazers.map(_.starred_at).flatten.map(_.take(7))
+    timeline = utils.computeTimeline(starTimestamps)
+  } yield Repo(repoName, timeline._1, timeline._2)).value
 
   def listStargazers(
     org: String,

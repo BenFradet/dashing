@@ -10,25 +10,25 @@ object model {
   case object PRsDash extends Dashboard
 
   @js.native
-  trait Repo extends js.Object {
-    def name: String
-    def starsTimeline: js.Dictionary[Int]
-    def stars: Int
-  }
-
-  final case class RepoState(name: String, starsTimeline: List[(String, Int)], stars: Int)
-  object RepoState {
-    def empty = RepoState("", List.empty, 0)
-  }
-
-  @js.native
   trait DataPoint extends js.Object {
     def label: String
     def value: Double
   }
 
   @js.native
-  trait Timeline extends js.Object {
+  trait Repo extends js.Object {
+    def name: String
+    def starsTimeline: js.Array[DataPoint]
+    def stars: Int
+  }
+
+  final case class RepoState(name: String, starsTimeline: List[DataPoint], stars: Int)
+  object RepoState {
+    def empty = RepoState("", List.empty, 0)
+  }
+
+  @js.native
+  trait GHObjectTimeline extends js.Object {
     def members: js.Array[DataPoint]
     def nonMembers: js.Array[DataPoint]
   }

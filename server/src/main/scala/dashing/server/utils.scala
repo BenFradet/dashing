@@ -15,7 +15,7 @@ import scalaj.http.HttpResponse
 
 import scala.util.Try
 
-import model.DataPoint
+import model._
 
 object utils {
 
@@ -31,7 +31,7 @@ object utils {
     members = ms.map(_.login)
   } yield members).value
 
-  def computeTimeline(timeline: List[String]): List[DataPoint] = (for {
+  def computeTimeline(timeline: List[String]): (Timeline, Int) = (for {
     min <- timeline.minimumOption
     max <- timeline.maximumOption
     minMonth <- Try(YearMonth.parse(min)).toOption
@@ -39,9 +39,8 @@ object utils {
     successiveMonths = getSuccessiveMonths(minMonth, maxMonth).map(_.toString)
     counts = count(timeline)
     filledTL = fillTimeline(successiveMonths, counts)
-      .map(t => (t._1, t._2.toDouble))
-    dataPoints = filledTL.map(DataPoint.tupled)
-  } yield dataPoints).getOrElse(List.empty)
+    dataPoints = filledTL._1.map(t => DataPoint(t._1, t._2.toDouble))
+  } yield (dataPoints, filledTL._2)).getOrElse((List.empty, 0))
 
   def getSuccessiveMonths(ym1: YearMonth, ym2: YearMonth): List[YearMonth] =
     (if (ym1.isBefore(ym2)) {
@@ -50,11 +49,13 @@ object utils {
       Stream.iterate(ym2)(_.plusMonths(1)).takeWhile(!_.isAfter(ym1))
     }).toList
 
-  def fillTimeline[T](timeline: List[T], counts: Map[T, Int]): List[(T, Int)] =
-    timeline.foldLeft((List.empty[(T, Int)], 0)) { case ((acc, cnt), e) =>
+  def fillTimeline[T](timeline: List[T], counts: Map[T, Int]): (List[(T, Int)], Int) = {
+    val tl = timeline.foldLeft((List.empty[(T, Int)], 0)) { case ((acc, cnt), e) =>
       val c = counts.getOrElse(e, cnt)
       ((e, c) :: acc, c)
-    }._1.reverse
+    }
+    (tl._1.reverse, tl._2)
+  }
 
   def count[T](list: List[T]): Map[T, Int] =
     list.foldLeft((Map.empty[T, Int], 0)) { case ((m, c), month) =>

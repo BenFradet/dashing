@@ -14,7 +14,7 @@ import org.http4s._
 import org.http4s.dsl.io._
 import scalaj.http.HttpResponse
 
-import model.{GHObject, Timeline}
+import model.{GHObject, GHObjectTimeline}
 
 object PullRequestsService extends Service {
 
@@ -27,15 +27,15 @@ object PullRequestsService extends Service {
       .flatMap(_.fold(ex => NotFound(ex.getMessage), t => Ok(t.asJson.noSpaces)))
   }
 
-  def getPRs(org: String): IO[Either[GHException, Timeline]] = (for {
+  def getPRs(org: String): IO[Either[GHException, GHObjectTimeline]] = (for {
     repos <- EitherT(utils.getRepos(gh, org))
     repoNames = repos.map(_.name)
     prs <- EitherT(getPRs(org, repoNames))
     members <- EitherT(utils.getOrgMembers(gh, org))
     (prsByMember, prsByNonMember) = prs.partition(pr => members.toSet.contains(pr.author))
-    memberPRsCounted = utils.computeTimeline(prsByMember.map(_.created.take(7)))
-    nonMemberPRsCounted = utils.computeTimeline(prsByNonMember.map(_.created.take(7)))
-  } yield Timeline(memberPRsCounted, nonMemberPRsCounted)).value
+    memberPRsCounted = utils.computeTimeline(prsByMember.map(_.created.take(7)))._1
+    nonMemberPRsCounted = utils.computeTimeline(prsByNonMember.map(_.created.take(7)))._1
+  } yield GHObjectTimeline(memberPRsCounted, nonMemberPRsCounted)).value
 
   def getPRs(org: String, repoNames: List[String]): IO[Either[GHException, List[GHObject]]] = (for {
     nested <- EitherT(
