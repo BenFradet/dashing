@@ -69,7 +69,7 @@ lazy val client = project.in(file("client"))
 
 lazy val http4sVersion = "0.18.0-M3"
 lazy val github4sVersion = "0.17.0"
-lazy val circeVersion = "0.9.0-M1"
+lazy val circeVersion = "0.9.0-M2"
 lazy val scalatagsVersion = "0.6.7"
 lazy val logbackVersion = "1.2.3"
 lazy val specs2Version = "3.9.5"
