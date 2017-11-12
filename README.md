@@ -33,4 +33,19 @@ of time:
 
 ## How to use it
 
-TBW
+If you want to use it for your own organization, you can pass a custom
+[`application.conf`](server/src/main/resources/reference.conf):
+
+```ini
+# Github access token
+ghToken = token
+
+# Github organization from which to retrieve the data
+org = snowplow
+
+# Name of the most popular repository inside the organization specified above
+heroRepo = snowplow
+
+# Number of most popular repositories to analyze (hero repo excluded)
+topNRepos = 5
+```
