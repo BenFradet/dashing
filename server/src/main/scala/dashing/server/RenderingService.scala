@@ -6,7 +6,7 @@ import org.http4s.MediaType._
 import org.http4s.dsl.io._
 import org.http4s.headers._
 
-object RenderingService extends Service {
+object RenderingService {
 
   val index = {
     import scalatags.Text.all._
@@ -30,7 +30,7 @@ object RenderingService extends Service {
       .orElse(StaticFile.fromURL(getClass.getResource("/" + file), Some(req)))
       .getOrElseF(NotFound())
 
-  override val service = HttpService[IO] {
+  val service = HttpService[IO] {
     case GET -> Root =>
       Ok(index.render)
         .map(_.withContentType(Some(`Content-Type`(`text/html`, Charset.`UTF-8`))))

@@ -18,7 +18,7 @@ import scalaj.http.HttpResponse
 
 import model.Repo
 
-object StarsService extends Service {
+object StarsService {
 
   // config
   val gh = Github(sys.env.get("GITHUB4S_ACCESS_TOKEN"))
@@ -27,7 +27,7 @@ object StarsService extends Service {
   val topN = 5
   val minStarsThreshold = 10
 
-  override val service = HttpService[IO] {
+  val service = HttpService[IO] {
     case GET -> Root / "stars" / "top-n" => getTopN(org, topN, heroRepo, minStarsThreshold)
       .flatMap(_.fold(ex => NotFound(ex.getMessage), l => Ok(l.asJson.noSpaces)))
     case GET -> Root / "stars" / "hero-repo" => getStars(org, heroRepo)

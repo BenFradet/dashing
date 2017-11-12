@@ -16,13 +16,13 @@ import scalaj.http.HttpResponse
 
 import model.{GHObject, GHObjectTimeline}
 
-object PullRequestsService extends Service {
+object PullRequestsService {
 
   // config
   val gh = Github(sys.env.get("GITHUB4S_ACCESS_TOKEN"))
   val org = "snowplow"
 
-  override val service = HttpService[IO] {
+  val service = HttpService[IO] {
     case GET -> Root / "prs" => getPRs(org)
       .flatMap(_.fold(ex => NotFound(ex.getMessage), t => Ok(t.asJson.noSpaces)))
   }
