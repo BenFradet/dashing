@@ -5,6 +5,13 @@ import cats.instances.all._
 import cats.syntax.semigroup._
 
 object model {
+  case class DashingConfig(
+    ghToken: String,
+    org: String,
+    heroRepo: String,
+    topNRepos: Int
+  )
+
   case class DataPoint(label: String, value: Double)
   type Timeline = List[DataPoint]
 
