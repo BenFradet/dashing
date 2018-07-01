@@ -73,7 +73,7 @@ lazy val circeVersion = "0.9.3"
 lazy val circeConfigVersion = "0.4.1"
 lazy val scalatagsVersion = "0.6.7"
 lazy val logbackVersion = "1.2.3"
-lazy val specs2Version = "3.9.5"
+lazy val specs2Version = "4.3.0"
 
 lazy val server = project.in(file("server"))
   .settings(baseSettings)
