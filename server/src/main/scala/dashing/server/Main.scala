@@ -2,7 +2,7 @@ package dashing.server
 
 import cats.effect.IO
 import cats.implicits._
-import com.typesafe.config.{ ConfigFactory, ConfigMemorySize }
+import com.typesafe.config.ConfigFactory
 import fs2.Stream
 import io.circe.generic.auto._
 import io.circe.config.syntax._
