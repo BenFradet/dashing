@@ -67,7 +67,7 @@ lazy val client = project.in(file("client"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(sharedJS)
 
-lazy val http4sVersion = "0.18.0-M5"
+lazy val http4sVersion = "0.18.13"
 lazy val github4sVersion = "0.18.5"
 lazy val circeVersion = "0.9.3"
 lazy val circeConfigVersion = "0.4.1"

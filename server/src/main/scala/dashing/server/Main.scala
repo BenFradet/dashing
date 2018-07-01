@@ -3,15 +3,16 @@ package dashing.server
 import cats.effect.IO
 import cats.implicits._
 import com.typesafe.config.ConfigFactory
-import fs2.Stream
+import fs2.{Stream, StreamApp}
+import fs2.StreamApp.ExitCode
 import io.circe.generic.auto._
 import io.circe.config.syntax._
 import org.http4s.server.blaze._
-import org.http4s.util.{ExitCode, StreamApp}
 
 import model.DashingConfig
 
 object Main extends StreamApp[IO] {
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   override def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] =
     ConfigFactory.load().as[DashingConfig] match {
@@ -26,7 +27,7 @@ object Main extends StreamApp[IO] {
           .serve
       case Left(e) => Stream.eval(IO {
         System.err.println(e.getMessage)
-        ExitCode.error
+        ExitCode.Error
       })
     }
 }

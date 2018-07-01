@@ -33,7 +33,7 @@ object RenderingService {
   val service = HttpService[IO] {
     case GET -> Root =>
       Ok(index.render)
-        .map(_.withContentType(Some(`Content-Type`(`text/html`, Charset.`UTF-8`))))
+        .map(_.withContentType(`Content-Type`(`text/html`, Charset.`UTF-8`)))
     case req @ GET -> Root / path if List(".js", ".css", ".map", ".ico").exists(path.endsWith) =>
       static(path, req)
   }
