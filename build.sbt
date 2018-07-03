@@ -38,7 +38,7 @@ lazy val sharedJS = shared.js.settings(name := "sharedJS")
 lazy val scalajsDomVersion = "0.9.6"
 lazy val scalajsReactVersion = "1.1.0"
 lazy val reactVersion = "15.6.1"
-lazy val chartjsVersion = "2.6.0"
+lazy val chartjsVersion = "2.7.2"
 
 lazy val client = project.in(file("client"))
   .settings(baseSettings)
@@ -62,7 +62,7 @@ lazy val client = project.in(file("client"))
         minified  "react-dom.min.js"
         dependsOn "react-with-addons.js"
         commonJSName "ReactDOM",
-      "org.webjars.bower" % "chartjs" % chartjsVersion
+      "org.webjars" % "chartjs" % chartjsVersion
         /        "Chart.js"
         minified "Chart.min.js"
     )
