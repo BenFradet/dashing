@@ -37,7 +37,7 @@ lazy val sharedJS = shared.js.settings(name := "sharedJS")
 
 lazy val scalajsDomVersion = "0.9.6"
 lazy val scalajsReactVersion = "1.2.1"
-lazy val reactVersion = "15.6.1"
+lazy val reactVersion = "16.4.1"
 lazy val chartjsVersion = "2.7.2"
 
 lazy val client = project.in(file("client"))
@@ -53,15 +53,20 @@ lazy val client = project.in(file("client"))
     ).map(_ % scalajsReactVersion) :+
       "org.scala-js" %%% "scalajs-dom" % scalajsDomVersion,
     jsDependencies ++= Seq(
-      "org.webjars.bower" % "react" % reactVersion
-        /        "react-with-addons.js"
-        minified "react-with-addons.min.js"
+      "org.webjars.npm" % "react" % reactVersion
+        /        "umd/react.development.js"
+        minified "umd/react.production.min.js"
         commonJSName "React",
-      "org.webjars.bower" % "react" % reactVersion
-        /         "react-dom.js"
-        minified  "react-dom.min.js"
-        dependsOn "react-with-addons.js"
+      "org.webjars.npm" % "react-dom" % reactVersion
+        /         "umd/react-dom.development.js"
+        minified  "umd/react-dom.production.min.js"
+        dependsOn "umd/react.development.js"
         commonJSName "ReactDOM",
+      "org.webjars.npm" % "react-dom" % reactVersion
+        /         "umd/react-dom-server.browser.development.js"
+        minified  "umd/react-dom-server.browser.production.min.js"
+        dependsOn "umd/react-dom.development.js"
+        commonJSName "ReactDOMServer",
       "org.webjars" % "chartjs" % chartjsVersion
         /        "Chart.js"
         minified "Chart.min.js"
