@@ -5,14 +5,14 @@ import cats.instances.all._
 import cats.syntax.semigroup._
 
 object model {
-  case class DashingConfig(
+  final case class DashingConfig(
     ghToken: String,
     org: String,
     heroRepo: String,
     topNRepos: Int
   )
 
-  case class DataPoint(label: String, value: Double)
+  final case class DataPoint(label: String, value: Double)
   type Timeline = List[DataPoint]
 
   final case class Repo(name: String, starsTimeline: Timeline, stars: Int)
@@ -31,6 +31,8 @@ object model {
     }
   }
 
-  case class GHObject(author: String, created: String)
-  case class GHObjectTimeline(members: Timeline, nonMembers: Timeline)
+  sealed trait CacheEntry
+
+  final case class GHObject(author: String, created: String)
+  final case class GHObjectTimeline(members: Timeline, nonMembers: Timeline) extends CacheEntry
 }
