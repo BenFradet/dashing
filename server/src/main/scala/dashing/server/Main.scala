@@ -19,9 +19,9 @@ object Main extends StreamApp[IO] {
   override def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] =
     ConfigFactory.load().as[DashingConfig] match {
       case Right(c) =>
-        val duration = Cache.TimeSpec.fromDuration(12.hours)
         for {
-          cache <- Stream.eval(Cache.createCache[IO, String, CacheEntry](duration))
+          cache <- Stream.eval(
+            Cache.createCache[IO, String, CacheEntry](Cache.TimeSpec.fromDuration(12.hours)))
           apiService = StarsService.service(c.ghToken, c.org, c.heroRepo, c.topNRepos) <+>
             PullRequestsService.service(cache, c.ghToken, c.org)
           server <- BlazeBuilder[IO]
