@@ -27,24 +27,10 @@ object PullRequestsService {
   )(implicit ec: ExecutionContext): HttpService[IO] =
     HttpService[IO] {
       case GET -> Root / "prs" => for {
-        prs <- lookupOrInsertPRs(cache, Github(Some(token)), org)
+        prs <- cache.lookupOrInsert("prs", getPRs(Github(Some(token)), org))
         res <- prs.fold(ex => NotFound(ex.getMessage), t => Ok(t.asJson.noSpaces))
       } yield res
     }
-
-  def lookupOrInsertPRs(cache: Cache[IO, String, CacheEntry], gh: Github, org: String)(implicit ec: ExecutionContext): IO[Either[GHException, GHObjectTimeline]] = for {
-    cached <- cache.lookup("prs")
-    timeline <- cached match {
-      case Some(tl: GHObjectTimeline) => IO.pure(Right(tl))
-      case _ => for {
-        res <- getPRs(gh, org)
-        _ <- res match {
-          case Right(tl) => cache.insert("prs", tl)
-          case _ => IO.pure(())
-        }
-      } yield res
-    }
-  } yield timeline
 
   def getPRs(gh: Github, org: String): IO[Either[GHException, GHObjectTimeline]] = (for {
     repos <- EitherT(utils.getRepos(gh, org))
