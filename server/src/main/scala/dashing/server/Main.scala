@@ -22,7 +22,7 @@ object Main extends StreamApp[IO] {
         for {
           cache <- Stream.eval(
             Cache.createCache[IO, String, CacheEntry](Cache.TimeSpec.fromDuration(12.hours)))
-          apiService = StarsService.service(c.ghToken, c.org, c.heroRepo, c.topNRepos) <+>
+          apiService = StarsService.service(cache, c.ghToken, c.org, c.heroRepo, c.topNRepos) <+>
             PullRequestsService.service(cache, c.ghToken, c.org)
           server <- BlazeBuilder[IO]
             .bindHttp(8080, "localhost")
