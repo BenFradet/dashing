@@ -35,6 +35,9 @@ class Cache[F[_], K, V] private[Cache] (
   def lookupNoUpdate(k: K)(implicit F: Sync[F], T: Timer[F]): F[Option[V]] =
     Cache.lookupNoUpdate(this)(k)
 
+  def lookupOrInsert[E](k: K, v: F[Either[E, V]])(implicit F: Sync[F], T: Timer[F]): F[Either[E, V]] =
+    Cache.lookupOrInsert(this)(k, v)
+
   // Inserting
 
   /**
@@ -199,6 +202,20 @@ object Cache {
     Timer[F].clockMonotonic(NANOSECONDS)
       .flatMap(now => lookupItemT(true, k, c, TimeSpec.unsafeFromNanos(now)))
       .map(_.map(_.item))
+
+  def lookupOrInsert[F[_]: Sync : Timer, K, V, E](c: Cache[F, K, V])(k: K, v: F[Either[E, V]]): F[Either[E, V]] = for {
+    cached <- c.lookup(k)
+    res <- cached match {
+      case Some(value) => Sync[F].pure(Right(value))
+      case _ => for {
+        value <- v
+        _ <- value match {
+          case Right(va) => c.insert(k, va)
+          case _ => Sync[F].pure(())
+        }
+      } yield value
+    }
+  } yield res
 
   /**
     * Lookup an item with the given key, but don't delete it if it is expired.
