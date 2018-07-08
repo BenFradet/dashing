@@ -4,12 +4,9 @@ Dashboards to monitor the health of your open source organization.
 
 [![Build Status](https://travis-ci.org/BenFradet/dashing.svg?branch=master)](https://travis-ci.org/BenFradet/dashing)
 
-## Motivation
+## Dashboards
 
-We've been wanting to measure the impact and health of the [Snowplow](https://github.com/snowplow)
-open source organization for a while.
-
-As a first step, this project incorporate the following set of dashboards:
+As a first step, this project incorporates the following set of dashboards:
 
 ### Hero repo stars
 
