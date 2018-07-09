@@ -3,7 +3,7 @@ package dashing.server
 import java.time.YearMonth
 
 import cats.data.EitherT
-import cats.effect.IO
+import cats.effect.Sync
 import cats.implicits._
 import github4s.Github
 import github4s.Github._
@@ -19,17 +19,18 @@ import model._
 
 object utils {
 
-  def getRepos(gh: Github, org: String): IO[Either[GHException, List[Repository]]] =
+  def getRepos[F[_]: Sync](gh: Github, org: String): F[Either[GHException, List[Repository]]] =
     autoPaginate { p =>
-      gh.repos.listOrgRepos(org, Some("sources"), Some(p)).exec[IO, HttpResponse[String]]()
+      gh.repos.listOrgRepos(org, Some("sources"), Some(p)).exec[F, HttpResponse[String]]()
     }
 
-  def getOrgMembers(gh: Github, org: String): IO[Either[GHException, List[String]]] = (for {
-    ms <- EitherT(autoPaginate { p =>
-      gh.organizations.listMembers(org, pagination = Some(p)).exec[IO, HttpResponse[String]]()
-    })
-    members = ms.map(_.login)
-  } yield members).value
+  def getOrgMembers[F[_]: Sync](gh: Github, org: String): F[Either[GHException, List[String]]] =
+    (for {
+      ms <- EitherT(autoPaginate { p =>
+        gh.organizations.listMembers(org, pagination = Some(p)).exec[F, HttpResponse[String]]()
+      })
+      members = ms.map(_.login)
+    } yield members).value
 
   def computeTimeline(timeline: List[String]): (Timeline, Int) = (for {
     min <- timeline.minimumOption
@@ -63,9 +64,9 @@ object utils {
       (m + (month -> cnt), cnt)
     }._1
 
-  def autoPaginate[T](
-    call: Pagination => IO[Either[GHException, GHResult[List[T]]]]
-  ): IO[Either[GHException, List[T]]] = (for {
+  def autoPaginate[F[_]: Sync, T](
+    call: Pagination => F[Either[GHException, GHResult[List[T]]]]
+  ): F[Either[GHException, List[T]]] = (for {
     firstPage <- EitherT(call(Pagination(1, 100)))
     pages = (utils.getNrPages(firstPage.headers) match {
       case Some(n) if n >= 2 => (2 to n).toList
