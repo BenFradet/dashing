@@ -9,14 +9,12 @@ import org.http4s.dsl.io._
 import org.http4s.testing.IOMatchers
 import org.specs2.mutable.Specification
 
-import model.CacheEntry
-
 class PullRequestsServiceSpec extends Specification with IOMatchers {
   args(skipAll = sys.env.get("GITHUB4S_ACCESS_TOKEN").isEmpty)
 
   def serve(req: Request[IO]): Response[IO] = (for {
-    cache <- Cache.createCache[IO, String, CacheEntry](Cache.TimeSpec.fromDuration(12.hours))
-    service <- PullRequestsService
+    cache <- Cache.createCache[IO, String, String](Cache.TimeSpec.fromDuration(12.hours))
+    service <- new PullRequestsService[IO]()
       .service(cache, sys.env.getOrElse("GITHUB4S_ACCESS_TOKEN", ""), "igwp")
       .orNotFound(req)
   } yield service).unsafeRunSync
