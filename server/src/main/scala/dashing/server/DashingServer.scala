@@ -13,7 +13,7 @@ import org.http4s.server.blaze._
 
 import model.DashingConfig
 
-object Main extends StreamApp[IO] {
+object DashingServer extends StreamApp[IO] {
   import scala.concurrent.ExecutionContext.Implicits.global
 
   override def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] =
