@@ -7,7 +7,8 @@ import org.http4s.testing.IOMatchers
 import org.specs2.mutable.Specification
 
 class RenderingServiceSpec extends Specification with IOMatchers {
-  def serve(req: Request[IO]): Response[IO] = RenderingService.service.orNotFound(req).unsafeRunSync
+  def serve(req: Request[IO]): Response[IO] =
+    new RenderingService[IO]().service.orNotFound(req).unsafeRunSync
 
   val index = """
     |<html>

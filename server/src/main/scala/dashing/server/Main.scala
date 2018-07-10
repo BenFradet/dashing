@@ -27,7 +27,7 @@ object Main extends StreamApp[IO] {
             new PullRequestsService[IO]().service(cache, c.ghToken, c.org)
           server <- BlazeBuilder[IO]
             .bindHttp(8080, "localhost")
-            .mountService(RenderingService.service)
+            .mountService(new RenderingService[IO]().service)
             .mountService(apiService, "/api")
             .serve
         } yield server

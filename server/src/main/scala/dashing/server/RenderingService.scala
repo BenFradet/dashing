@@ -1,12 +1,13 @@
 package dashing.server
 
-import cats.effect.IO
-import org.http4s._
+import cats.effect.Effect
+import cats.syntax.functor._
+import org.http4s.{Charset, HttpService, Request, StaticFile}
 import org.http4s.MediaType._
-import org.http4s.dsl.io._
+import org.http4s.dsl.Http4sDsl
 import org.http4s.headers._
 
-object RenderingService {
+class RenderingService[F[_]: Effect] extends Http4sDsl[F] {
 
   val index = {
     import scalatags.Text.all._
@@ -25,12 +26,12 @@ object RenderingService {
     )
   }
 
-  def static(file: String, req: Request[IO]) =
+  def static(file: String, req: Request[F]) =
     StaticFile.fromResource("/" + file, Some(req))
       .orElse(StaticFile.fromURL(getClass.getResource("/" + file), Some(req)))
       .getOrElseF(NotFound())
 
-  val service = HttpService[IO] {
+  val service = HttpService[F] {
     case GET -> Root =>
       Ok(index.render)
         .map(_.withContentType(`Content-Type`(`text/html`, Charset.`UTF-8`)))
