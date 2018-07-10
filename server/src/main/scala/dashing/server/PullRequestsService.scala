@@ -16,19 +16,19 @@ import org.http4s._
 import org.http4s.dsl.io._
 import scalaj.http.HttpResponse
 
-import model.{CacheEntry, GHObject, GHObjectTimeline}
+import model.{GHObject, GHObjectTimeline}
 
 object PullRequestsService {
 
   def service(
-    cache: Cache[IO, String, CacheEntry],
+    cache: Cache[IO, String, String],
     token: String,
     org: String
   )(implicit ec: ExecutionContext): HttpService[IO] =
     HttpService[IO] {
       case GET -> Root / "prs" => for {
-        prs <- cache.lookupOrInsert("prs", getPRs(Github(Some(token)), org))
-        res <- prs.fold(ex => NotFound(ex.getMessage), t => Ok(t.asJson.noSpaces))
+        prs <- cache.lookupOrInsert("prs", getPRs(Github(Some(token)), org).map(_.map(_.asJson.noSpaces)))
+        res <- prs.fold(ex => NotFound(ex.getMessage), t => Ok(t))
       } yield res
     }
 

@@ -11,7 +11,7 @@ import io.circe.generic.auto._
 import io.circe.config.syntax._
 import org.http4s.server.blaze._
 
-import model.{CacheEntry, DashingConfig}
+import model.DashingConfig
 
 object Main extends StreamApp[IO] {
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -21,7 +21,7 @@ object Main extends StreamApp[IO] {
       case Right(c) =>
         for {
           cache <- Stream.eval(
-            Cache.createCache[IO, String, CacheEntry](Cache.TimeSpec.fromDuration(12.hours)))
+            Cache.createCache[IO, String, String](Cache.TimeSpec.fromDuration(12.hours)))
           apiService = StarsService.service(cache, c.ghToken, c.org, c.heroRepo, c.topNRepos) <+>
             PullRequestsService.service(cache, c.ghToken, c.org)
           server <- BlazeBuilder[IO]

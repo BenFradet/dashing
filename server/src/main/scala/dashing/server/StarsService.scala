@@ -18,12 +18,12 @@ import org.http4s._
 import org.http4s.dsl.io._
 import scalaj.http.HttpResponse
 
-import model.{CacheEntry, Repo, Repos}
+import model.{Repo, Repos}
 
 object StarsService {
 
   def service(
-    cache: Cache[IO, String, CacheEntry],
+    cache: Cache[IO, String, String],
     token: String,
     org: String,
     heroRepo: String,
@@ -32,17 +32,15 @@ object StarsService {
     val gh = Github(Some(token))
     HttpService[IO] {
       case GET -> Root / "stars" / "top-n" => for {
-        topN <- cache.lookupOrInsert("top-n", getTopN(gh, org, topN, heroRepo))
-        res <- topN.fold(ex => NotFound(ex.getMessage), l => Ok(l.asJson.noSpaces))
-        //getTopN(gh, org, topN, heroRepo)
-        //.flatMap(_.fold(ex => NotFound(ex.getMessage), l => Ok(l.asJson.noSpaces)))
+        topN <- cache.lookupOrInsert("top-n",
+          getTopN(gh, org, topN, heroRepo).map(_.map(_.asJson.noSpaces)))
+        res <- topN.fold(ex => NotFound(ex.getMessage), l => Ok(l))
       } yield res
       case GET -> Root / "stars" / "hero-repo" => for {
-        stars <- cache.lookupOrInsert("hero-repo", getStars(gh, org, heroRepo))
-        res <- stars.fold(ex => NotFound(ex.getMessage), r => Ok(r.asJson.noSpaces))
+        stars <- cache.lookupOrInsert("hero-repo",
+          getStars(gh, org, heroRepo).map(_.map(_.asJson.noSpaces)))
+        res <- stars.fold(ex => NotFound(ex.getMessage), r => Ok(r))
       } yield res
-      //getStars(gh, org, heroRepo)
-      //  .flatMap(_.fold(ex => NotFound(ex.getMessage), r => Ok(r.asJson.noSpaces)))
     }
   }
 
