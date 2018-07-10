@@ -51,7 +51,7 @@ object StarsService {
     heroRepo: String,
     minStarsThreshold: Int = 10
   ): IO[Either[GHException, Repos]] = (for {
-    rs <- EitherT(utils.getRepos(gh, org))
+    rs <- EitherT(utils.getRepos[IO](gh, org))
     repos = rs
       .filter(_.status.stargazers_count >= minStarsThreshold)
       .map(_.name)

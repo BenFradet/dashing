@@ -3,9 +3,6 @@ package dashing.server
 import cats.Monoid
 import cats.instances.all._
 import cats.syntax.semigroup._
-import io.circe.Encoder
-import io.circe.syntax._
-import io.circe.generic.auto._
 
 object model {
   final case class DashingConfig(

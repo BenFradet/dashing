@@ -3,6 +3,7 @@ package dashing.server
 import java.time.YearMonth
 
 import cats.data.EitherT
+import cats.effect.IO
 import github4s.Github
 import org.http4s.testing.Http4sMatchers
 import org.specs2.mutable.Specification
@@ -13,20 +14,20 @@ class UtilsSpec extends Specification with Http4sMatchers {
 
   "utils.getRepos" should {
     "retrieve the list of repos in an org" in {
-      EitherT(utils.getRepos(gh, "igwp")).map(_.size) must returnRight(4)
+      EitherT(utils.getRepos[IO](gh, "igwp")).map(_.size) must returnRight(4)
     }
     "be a left if the org doesn't exist" in {
-      EitherT(utils.getRepos(gh, "notexist"))
+      EitherT(utils.getRepos[IO](gh, "notexist"))
         .leftMap(_.getMessage.take(10)) must returnLeft("Failed inv")
     }
   }
 
   "utils.getOrgMembers" should {
     "retrieve the list of repos in an org" in {
-      EitherT(utils.getOrgMembers(gh, "igwp")).map(_.size) must returnRight(1)
+      EitherT(utils.getOrgMembers[IO](gh, "igwp")).map(_.size) must returnRight(1)
     }
     "be a left if the org doesn't exist" in {
-      EitherT(utils.getOrgMembers(gh, "notexist"))
+      EitherT(utils.getOrgMembers[IO](gh, "notexist"))
         .leftMap(_.getMessage.take(10)) must returnLeft("Failed inv")
     }
   }

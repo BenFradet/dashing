@@ -33,10 +33,10 @@ object PullRequestsService {
     }
 
   def getPRs(gh: Github, org: String): IO[Either[GHException, GHObjectTimeline]] = (for {
-    repos <- EitherT(utils.getRepos(gh, org))
+    repos <- EitherT(utils.getRepos[IO](gh, org))
     repoNames = repos.map(_.name)
     prs <- EitherT(getPRs(gh, org, repoNames))
-    members <- EitherT(utils.getOrgMembers(gh, org))
+    members <- EitherT(utils.getOrgMembers[IO](gh, org))
     (prsByMember, prsByNonMember) = prs.partition(pr => members.toSet.contains(pr.author))
     memberPRsCounted = utils.computeTimeline(prsByMember.map(_.created.take(7)))._1
     nonMemberPRsCounted = utils.computeTimeline(prsByNonMember.map(_.created.take(7)))._1
