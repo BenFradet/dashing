@@ -34,12 +34,12 @@ class StarsService[F[_]: Effect: Timer] extends Http4sDsl[F] {
     HttpService[F] {
       case GET -> Root / "stars" / "top-n" => for {
         topN <- cache.lookupOrInsert("top-n",
-          getTopN(gh, org, topN, heroRepo).map(_.map(_.asJson.noSpaces)))
+          getTopN(gh, org, topN, heroRepo).value.map(_.map(_.asJson.noSpaces)))
         res <- topN.fold(ex => NotFound(ex.getMessage), l => Ok(l))
       } yield res
       case GET -> Root / "stars" / "hero-repo" => for {
         stars <- cache.lookupOrInsert("hero-repo",
-          getStars(gh, org, heroRepo).map(_.map(_.asJson.noSpaces)))
+          getStars(gh, org, heroRepo).value.map(_.map(_.asJson.noSpaces)))
         res <- stars.fold(ex => NotFound(ex.getMessage), r => Ok(r))
       } yield res
     }
@@ -54,13 +54,13 @@ object StarsService {
     n: Int,
     heroRepo: String,
     minStarsThreshold: Int = 10
-  ): F[Either[GHException, Repos]] = (for {
+  ): EitherT[F, GHException, Repos] = for {
     rs <- EitherT(utils.getRepos[F](gh, org))
     repos = rs
       .filter(_.status.stargazers_count >= minStarsThreshold)
       .map(_.name)
       .filter(_ != heroRepo)
-    stars <- EitherT(getStars(gh, org, repos))
+    stars <- getStars(gh, org, repos)
     sorted = stars.repos.sortBy(-_.stars)
     topN = sorted.take(n)
     othersCombined = Monoid.combineAll(sorted.drop(n))
@@ -68,25 +68,22 @@ object StarsService {
       name = "others",
       starsTimeline = othersCombined.starsTimeline.sortBy(_.label)
     )
-  } yield Repos(others :: topN)).value
+  } yield Repos(others :: topN)
 
   def getStars[F[_]: Sync](
     gh: Github,
     org: String,
     repoNames: List[String]
-  ): F[Either[GHException, Repos]] =
-    repoNames
-      .traverse(r => getStars(gh, org, r))
-      .map(_.sequence)
-      .map(_.map(Repos.apply))
+  ): EitherT[F, GHException, Repos] =
+    repoNames.traverse(r => getStars(gh, org, r)).map(Repos.apply)
 
   def getStars[F[_]: Sync](
-      gh: Github, org: String, repoName: String): F[Either[GHException, Repo]] = (for {
+      gh: Github, org: String, repoName: String): EitherT[F, GHException, Repo] = for {
     stargazers <- EitherT(utils.autoPaginate(p => listStargazers(gh, org, repoName, Some(p))))
     // we keep only yyyy-mm
     starTimestamps = stargazers.map(_.starred_at).flatten.map(_.take(7))
     timeline = utils.computeTimeline(starTimestamps)
-  } yield Repo(repoName, timeline._1, timeline._2)).value
+  } yield Repo(repoName, timeline._1, timeline._2)
 
   def listStargazers[F[_]: Sync](
     gh: Github,

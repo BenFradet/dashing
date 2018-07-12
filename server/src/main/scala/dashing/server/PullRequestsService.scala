@@ -51,10 +51,9 @@ object PullRequestsService {
     org: String,
     repoNames: List[String]
   ): EitherT[F, GHException, List[GHObject]] = for {
-    nested <-
-      repoNames
-        .traverse(getPRs(gh, org, _))
-        .map(_.sequence)
+    nested <- repoNames
+      .traverse(getPRs(gh, org, _))
+      .map(_.sequence)
     flattened = nested.flatten
   } yield flattened
 
