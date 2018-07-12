@@ -55,7 +55,7 @@ object StarsService {
     heroRepo: String,
     minStarsThreshold: Int = 10
   ): EitherT[F, GHException, Repos] = for {
-    rs <- EitherT(utils.getRepos[F](gh, org))
+    rs <- utils.getRepos[F](gh, org)
     repos = rs
       .filter(_.status.stargazers_count >= minStarsThreshold)
       .map(_.name)
@@ -79,7 +79,7 @@ object StarsService {
 
   def getStars[F[_]: Sync](
       gh: Github, org: String, repoName: String): EitherT[F, GHException, Repo] = for {
-    stargazers <- EitherT(utils.autoPaginate(p => listStargazers(gh, org, repoName, Some(p))))
+    stargazers <- utils.autoPaginate(p => listStargazers(gh, org, repoName, Some(p)))
     // we keep only yyyy-mm
     starTimestamps = stargazers.map(_.starred_at).flatten.map(_.take(7))
     timeline = utils.computeTimeline(starTimestamps)

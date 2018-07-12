@@ -19,18 +19,18 @@ import model._
 
 object utils {
 
-  def getRepos[F[_]: Sync](gh: Github, org: String): F[Either[GHException, List[Repository]]] =
+  def getRepos[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, List[Repository]] =
     autoPaginate { p =>
       gh.repos.listOrgRepos(org, Some("sources"), Some(p)).exec[F, HttpResponse[String]]()
     }
 
-  def getOrgMembers[F[_]: Sync](gh: Github, org: String): F[Either[GHException, List[String]]] =
-    (for {
-      ms <- EitherT(autoPaginate { p =>
+  def getOrgMembers[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, List[String]] =
+    for {
+      ms <- autoPaginate { p =>
         gh.organizations.listMembers(org, pagination = Some(p)).exec[F, HttpResponse[String]]()
-      })
+      }
       members = ms.map(_.login)
-    } yield members).value
+    } yield members
 
   def computeTimeline(timeline: List[String]): (Timeline, Int) = (for {
     min <- timeline.minimumOption
@@ -66,14 +66,14 @@ object utils {
 
   def autoPaginate[F[_]: Sync, T](
     call: Pagination => F[Either[GHException, GHResult[List[T]]]]
-  ): F[Either[GHException, List[T]]] = (for {
+  ): EitherT[F, GHException, List[T]] = for {
     firstPage <- EitherT(call(Pagination(1, 100)))
     pages = (utils.getNrPages(firstPage.headers) match {
       case Some(n) if n >= 2 => (2 to n).toList
       case _ => Nil
     }).map(Pagination(_, 100))
     restPages <- EitherT(pages.traverse(call(_)).map(_.sequence))
-  } yield firstPage.result ++ restPages.map(_.result).flatten).value
+  } yield firstPage.result ++ restPages.map(_.result).flatten
 
   private final case class Relation(name: String, url: String)
   def getNrPages(headers: Map[String, Seq[String]]): Option[Int] = for {

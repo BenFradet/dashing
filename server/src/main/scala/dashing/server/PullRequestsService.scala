@@ -37,10 +37,10 @@ class PullRequestsService[F[_]: Effect: Timer] extends Http4sDsl[F] {
 object PullRequestsService {
 
   def getPRs[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, GHObjectTimeline] = for {
-    repos <- EitherT(utils.getRepos[F](gh, org))
+    repos <- utils.getRepos[F](gh, org)
     repoNames = repos.map(_.name)
     prs <- getPRs(gh, org, repoNames)
-    members <- EitherT(utils.getOrgMembers[F](gh, org))
+    members <- utils.getOrgMembers[F](gh, org)
     (prsByMember, prsByNonMember) = prs.partition(pr => members.toSet.contains(pr.author))
     memberPRsCounted = utils.computeTimeline(prsByMember.map(_.created.take(7)))._1
     nonMemberPRsCounted = utils.computeTimeline(prsByNonMember.map(_.created.take(7)))._1
@@ -60,7 +60,7 @@ object PullRequestsService {
   def getPRs[F[_]: Sync](
       gh: Github, org: String, repoName: String): EitherT[F, GHException, List[GHObject]] =
     for {
-      prs <- EitherT(utils.autoPaginate(p => listPRs(gh, org, repoName, Some(p))))
+      prs <- utils.autoPaginate(p => listPRs(gh, org, repoName, Some(p)))
       pullRequests = prs
         .map(pr => (pr.user.map(_.login), pr.created_at.some).bisequence)
         .flatten
