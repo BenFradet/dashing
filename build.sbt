@@ -53,6 +53,7 @@ lazy val client = project.in(file("client"))
     ).map(_ % scalajsReactVersion) :+
       "org.scala-js" %%% "scalajs-dom" % scalajsDomVersion,
     jsDependencies ++= Seq(
+      "org.webjars.npm" % "js-tokens" % "4.0.0" / "META-INF/resources/webjars/js-tokens/4.0.0/index.js",
       "org.webjars.npm" % "react" % reactVersion
         /        "umd/react.development.js"
         minified "umd/react.production.min.js"
