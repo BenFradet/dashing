@@ -1,5 +1,7 @@
 package dashing.server
 
+import scala.concurrent.duration.FiniteDuration
+
 import cats.Monoid
 import cats.instances.all._
 import cats.syntax.semigroup._
@@ -9,7 +11,8 @@ object model {
     ghToken: String,
     org: String,
     heroRepo: String,
-    topNRepos: Int
+    topNRepos: Int,
+    cacheDuration: FiniteDuration
   )
 
   final case class DataPoint(label: String, value: Double)

@@ -1,6 +1,5 @@
 package dashing.server
 
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 
 import cats.effect.{Effect, IO, Timer}
@@ -28,7 +27,7 @@ object ServerStream {
       case Right(c) =>
         for {
           cache <- Stream.eval(
-            Cache.createCache[F, String, String](Cache.TimeSpec.fromDuration(12.hours)))
+            Cache.createCache[F, String, String](Cache.TimeSpec.fromDuration(c.cacheDuration)))
           apiService =
             new StarsService[F].service(cache, c.ghToken, c.org, c.heroRepo, c.topNRepos) <+>
             new PullRequestsService[F]().service(cache, c.ghToken, c.org)
