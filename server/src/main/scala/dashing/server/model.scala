@@ -12,7 +12,9 @@ object model {
     org: String,
     heroRepo: String,
     topNRepos: Int,
-    cacheDuration: FiniteDuration
+    cacheDuration: FiniteDuration,
+    host: String,
+    port: Int
   )
 
   final case class DataPoint(label: String, value: Double)

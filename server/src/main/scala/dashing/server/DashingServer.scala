@@ -32,7 +32,7 @@ object ServerStream {
             new StarsService[F].service(cache, c.ghToken, c.org, c.heroRepo, c.topNRepos) <+>
             new PullRequestsService[F]().service(cache, c.ghToken, c.org)
           server <- BlazeBuilder[F]
-            .bindHttp(8080, "localhost")
+            .bindHttp(c.port, c.host)
             .mountService(new RenderingService[F]().service)
             .mountService(apiService, "/api")
             .serve
