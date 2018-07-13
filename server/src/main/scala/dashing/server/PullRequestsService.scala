@@ -73,5 +73,5 @@ object PullRequestsService {
     repoName: String,
     page: Option[Pagination]
   ): F[Either[GHException, GHResult[List[PullRequest]]]] =
-    gh.pullRequests.list(org, repoName).exec[F, HttpResponse[String]]()
+    gh.pullRequests.list(org, repoName, Nil, page).exec[F, HttpResponse[String]]()
 }
