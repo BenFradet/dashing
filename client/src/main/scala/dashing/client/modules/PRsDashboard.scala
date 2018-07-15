@@ -32,19 +32,23 @@ object PRsDashboard {
         <.h2("Pull requests dashboard"),
         Chart(Chart.ChartProps(
           s"Number of pull requests opened by members and non-members",
-          Chart.LineChart,
+          Chart.BarChart,
           ChartData(
             s.members.map(_.label).toSeq,
             Seq(
               ChartDataset(
                 s.members.map(_.value).toSeq,
                 "opened by members",
-                "#D83F87"
+                "#D83F87",
+                "rgba(216, 63, 135, 0.5)",
+                1
               ),
               ChartDataset(
                 s.nonMembers.map(_.value).toSeq,
                 "opened by non-members",
-                "#2A1B3D"
+                "#2A1B3D",
+                "rgba(42, 27, 61, 0.5)",
+                1
               )
             )
           )
