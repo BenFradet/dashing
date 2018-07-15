@@ -12,22 +12,24 @@ import scala.scalajs.js.annotation.JSGlobal
 trait ChartDataset extends js.Object {
   def label: String = js.native
   def data: js.Array[Double] = js.native
-  def fillColor: String = js.native
-  def strokeColor: String = js.native
+  def borderColor: String = js.native
+  def backgroundColor: String = js.native
+  def borderWidth : Int = js.native
 }
-
 object ChartDataset {
   def apply(
     data: Seq[Double],
     label: String,
     borderColor: String = "#408080",
-    backgroundColor: String = "rgba(0, 0, 0, 0)"
+    backgroundColor: String = "rgba(0, 0, 0, 0)",
+    borderWidth: Int = 0
   ): ChartDataset =
     js.Dynamic.literal(
       label = label,
       data = data.toJSArray,
       borderColor = borderColor,
-      backgroundColor = backgroundColor
+      backgroundColor = backgroundColor,
+      borderWidth = borderWidth
     ).asInstanceOf[ChartDataset]
 }
 
@@ -36,7 +38,6 @@ trait ChartData extends js.Object {
   def labels: js.Array[String] = js.native
   def datasets: js.Array[ChartDataset] = js.native
 }
-
 object ChartData {
   def apply(labels: Seq[String], datasets: Seq[ChartDataset]): ChartData =
     js.Dynamic.literal(
@@ -49,7 +50,6 @@ object ChartData {
 trait ChartOptions extends js.Object {
   def responsive: Boolean = js.native
 }
-
 object ChartOptions {
   def apply(title: String, responsive: Boolean): ChartOptions = {
     val t = js.Dynamic.literal(display = true, text = title)
@@ -63,7 +63,6 @@ trait ChartConfiguration extends js.Object {
   def data: ChartData = js.native
   def options: ChartOptions = js.native
 }
-
 object ChartConfiguration {
   def apply(`type`: String, data: ChartData, options: ChartOptions): ChartConfiguration =
     js.Dynamic.literal(`type` = `type`, data = data, options = options)
@@ -77,12 +76,15 @@ class JSChart(ctx: js.Dynamic, config: ChartConfiguration) extends js.Object
 object Chart {
   sealed trait ChartStyle
   case object LineChart extends ChartStyle
+  case object BarChart extends ChartStyle
   case class ChartProps(name: String, style: ChartStyle, data: ChartData)
 
   def draw(ctx: js.Dynamic, props: ChartProps): Callback = Callback {
     props.style match {
       case LineChart =>
         new JSChart(ctx, ChartConfiguration("line", props.data, ChartOptions(props.name, true)))
+      case BarChart =>
+        new JSChart(ctx, ChartConfiguration("bar", props.data, ChartOptions(props.name, true)))
       case _ => throw new IllegalArgumentException
     }
   }
