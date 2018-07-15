@@ -34,7 +34,7 @@ class StarsService[F[_]: Effect: Timer] extends Http4sDsl[F] {
     HttpService[F] {
       case GET -> Root / "stars" / "top-n" => for {
         topN <- cache.lookupOrInsert("top-n",
-          getTopN(gh, org, topN, heroRepo).value.map(_.map(_.asJson.noSpaces)))
+          getTopN(gh, org, topN, heroRepo).value.map(_.map(_.repos.asJson.noSpaces)))
         res <- topN.fold(ex => NotFound(ex.getMessage), l => Ok(l))
       } yield res
       case GET -> Root / "stars" / "hero-repo" => for {
