@@ -48,6 +48,13 @@ class UtilsSpec extends Specification with Http4sMatchers {
     }
   }
 
+  "utils.fillTimeline" should {
+    "fill the holes in a timeline" in {
+      utils.fillTimeline(List(1, 2, 3, 4, 5), Map(1 -> 4, 3 -> 1, 5 -> 2)) must_==
+        List(1 -> 4, 2 -> 4, 3 -> 1, 4 -> 1, 5 -> 2) -> 2
+    }
+  }
+
   "utils.getSuccessiveMonths" should {
     "list all successive months between two dates" in {
       utils.getSuccessiveMonths(YearMonth.of(2014, 5), YearMonth.of(2014, 6)) must_==
