@@ -32,7 +32,7 @@ object utils {
       members = ms.map(_.login)
     } yield members
 
-  def computeTimeline(timeline: List[String]): (Timeline, Int) = (for {
+  def computeMonthlyTimeline(timeline: List[String]): (Timeline, Int) = (for {
     min <- timeline.minimumOption
     max <- timeline.maximumOption
     minMonth <- Try(YearMonth.parse(min)).toOption

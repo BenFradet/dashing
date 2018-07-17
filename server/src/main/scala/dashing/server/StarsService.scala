@@ -82,7 +82,7 @@ object StarsService {
     stargazers <- utils.autoPaginate(p => listStargazers(gh, org, repoName, Some(p)))
     // we keep only yyyy-mm
     starTimestamps = stargazers.map(_.starred_at).flatten.map(_.take(7))
-    timeline = utils.computeTimeline(starTimestamps)
+    timeline = utils.computeMonthlyTimeline(starTimestamps)
   } yield Repo(repoName, timeline._1, timeline._2)
 
   def listStargazers[F[_]: Sync](
