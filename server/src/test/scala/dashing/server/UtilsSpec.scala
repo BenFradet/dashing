@@ -7,6 +7,8 @@ import github4s.Github
 import org.http4s.testing.Http4sMatchers
 import org.specs2.mutable.Specification
 
+import model._
+
 class UtilsSpec extends Specification with Http4sMatchers {
 
   val gh = Github(sys.env.get("GITHUB4S_ACCESS_TOKEN"))
@@ -28,6 +30,21 @@ class UtilsSpec extends Specification with Http4sMatchers {
     "be a left if the org doesn't exist" in {
       utils.getOrgMembers[IO](gh, "notexist")
         .leftMap(_.getMessage.take(10)) must returnLeft("Failed inv")
+    }
+  }
+
+  "utils.computeMonthlyTimeline" should {
+    "compute a monthly cumulative count" in {
+      utils.computeMonthlyTimeline(List("2018-01", "2018-05")) must_== List(
+        DataPoint("2018-01", 1d),
+        DataPoint("2018-02", 1d),
+        DataPoint("2018-03", 1d),
+        DataPoint("2018-04", 1d),
+        DataPoint("2018-05", 2d)
+      ) -> 2
+    }
+    "return an empty list if the timeline doesn't contain YYYY-MM" in {
+      utils.computeMonthlyTimeline(List("test", "test2")) must_== Nil -> 0d
     }
   }
 
