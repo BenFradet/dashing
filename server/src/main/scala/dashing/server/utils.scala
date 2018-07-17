@@ -38,7 +38,7 @@ object utils {
     minMonth <- Try(YearMonth.parse(min)).toOption
     maxMonth <- Try(YearMonth.parse(max)).toOption
     successiveMonths = getSuccessiveMonths(minMonth, maxMonth).map(_.toString)
-    counts = count(timeline)
+    counts = cumulativeCount(timeline)
     filledTL = fillTimeline(successiveMonths, counts)
     dataPoints = filledTL._1.map(t => DataPoint(t._1, t._2.toDouble))
   } yield (dataPoints, filledTL._2)).getOrElse((List.empty, 0))
@@ -58,7 +58,7 @@ object utils {
     (tl._1.reverse, tl._2)
   }
 
-  def count[T](list: List[T]): Map[T, Int] =
+  def cumulativeCount[T](list: List[T]): Map[T, Int] =
     list.foldLeft((Map.empty[T, Int], 0)) { case ((m, c), month) =>
       val cnt = m.getOrElse(month, c) + 1
       (m + (month -> cnt), cnt)
