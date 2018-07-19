@@ -44,6 +44,9 @@ object utils {
     dataPoints = filledTL._1.map(t => DataPoint(t._1, t._2.toDouble))
   } yield (dataPoints, filledTL._2)).getOrElse((List.empty, 0))
 
+  def getSuccessiveQuarters(ym1: YearMonth, ym2: YearMonth): List[Quarter] =
+    getSuccessiveMonths(ym1, ym2).map(getQuarter).distinct
+
   def getQuarter(ym: YearMonth): Quarter =
     Quarter(ym.getYear, ym.atEndOfMonth.get(IsoFields.QUARTER_OF_YEAR))
 
