@@ -1,6 +1,7 @@
 package dashing.server
 
 import java.time.YearMonth
+import java.time.temporal.IsoFields
 
 import cats.data.EitherT
 import cats.effect.Sync
@@ -42,6 +43,9 @@ object utils {
     filledTL = fillTimeline(successiveMonths, counts)
     dataPoints = filledTL._1.map(t => DataPoint(t._1, t._2.toDouble))
   } yield (dataPoints, filledTL._2)).getOrElse((List.empty, 0))
+
+  def getQuarter(ym: YearMonth): Quarter =
+    Quarter(ym.getYear, ym.atEndOfMonth.get(IsoFields.QUARTER_OF_YEAR))
 
   def getSuccessiveMonths(ym1: YearMonth, ym2: YearMonth): List[YearMonth] =
     (if (ym1.isBefore(ym2)) {
