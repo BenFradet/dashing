@@ -76,6 +76,21 @@ class UtilsSpec extends Specification with Http4sMatchers {
     }
   }
 
+  "utils.getSuccessiveQuarters" should {
+    "list the Quarters between two YearMonths" in {
+      utils.getSuccessiveQuarters(YearMonth.of(2014, 6), YearMonth.of(2014, 7)) must_==
+        List(Quarter(2014, 2), Quarter(2014, 3))
+    }
+    "list the Quarters between two YearMontsh if they are not in chronological order" in {
+      utils.getSuccessiveQuarters(YearMonth.of(2014, 7), YearMonth.of(2014, 6)) must_==
+        List(Quarter(2014, 2), Quarter(2014, 3))
+    }
+    "give back a list of one quarter if both YearMonths are the same" in {
+      val ym = YearMonth.of(2014, 6)
+      utils.getSuccessiveQuarters(ym, ym) must_== List(Quarter(2014, 2))
+    }
+  }
+
   "utils.getQuarter" should {
     "provide the Quarter from a YearMonth" in {
       utils.getQuarter(YearMonth.of(2014, 5)) must_== Quarter(2014, 2)
