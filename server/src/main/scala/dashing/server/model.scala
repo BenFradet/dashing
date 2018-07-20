@@ -17,7 +17,7 @@ object model {
     port: Int
   )
 
-  final case class Quarter(quarter: Int, year: Int)
+  final case class Quarter(year: Int, quarter: Int)
 
   final case class DataPoint(label: String, value: Double)
   type Timeline = List[DataPoint]
