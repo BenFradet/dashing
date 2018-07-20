@@ -76,6 +76,12 @@ class UtilsSpec extends Specification with Http4sMatchers {
     }
   }
 
+  "utils.getQuarter" should {
+    "provide the Quarter from a YearMonth" in {
+      utils.getQuarter(YearMonth.of(2014, 5)) must_== Quarter(2014, 2)
+    }
+  }
+
   "utils.getNrPages" should {
     "retrieve the correct number of pages" in {
       utils.getNrPages(Map("Link" ->
