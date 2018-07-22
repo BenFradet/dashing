@@ -61,6 +61,12 @@ class UtilsSpec extends Specification with Http4sMatchers {
     }
   }
 
+  "utils.count" should {
+    "do a count" in {
+      utils.count(List(1, 1, 2, 3, 4)) must_== Map(1 -> 2, 2 -> 1, 3 -> 1, 4 -> 1)
+    }
+  }
+
   "utils.getSuccessiveMonths" should {
     "list all successive months between two dates" in {
       utils.getSuccessiveMonths(YearMonth.of(2014, 5), YearMonth.of(2014, 6)) must_==

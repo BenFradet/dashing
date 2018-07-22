@@ -71,6 +71,11 @@ object utils {
       (m + (e -> cnt), cnt)
     }._1
 
+  def count[T](list: List[T]): Map[T, Int] =
+    list.foldLeft(Map.empty[T, Int]) { case (m, e) =>
+      m + (e -> (m.getOrElse(e, 0) + 1))
+    }
+
   def autoPaginate[F[_]: Sync, T](
     call: Pagination => F[Either[GHException, GHResult[List[T]]]]
   ): EitherT[F, GHException, List[T]] = for {
