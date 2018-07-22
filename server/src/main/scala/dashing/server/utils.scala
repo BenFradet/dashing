@@ -44,6 +44,20 @@ object utils {
     dataPoints = filledTL._1.map(t => DataPoint(t._1, t._2.toDouble))
   } yield (dataPoints, filledTL._2)).getOrElse((List.empty, 0))
 
+  def computeQuarterlyTimeline(timeline: List[String]): Timeline = (for {
+    min <- timeline.minimumOption
+    max <- timeline.maximumOption
+    minMonth <- Try(YearMonth.parse(min)).toOption
+    maxMonth <- Try(YearMonth.parse(max)).toOption
+    successiveQuarters = getSuccessiveQuarters(minMonth, maxMonth)
+    yearMonths <- timeline
+      .map(ym => Try(YearMonth.parse(ym)).toOption)
+      .sequence
+    quarters = yearMonths.map(getQuarter)
+    counts = count(quarters)
+    filledTL = successiveQuarters.map(e => DataPoint(e.toString, counts.getOrElse(e, 0).toDouble))
+  } yield filledTL).getOrElse(List.empty)
+
   def getSuccessiveQuarters(ym1: YearMonth, ym2: YearMonth): List[Quarter] =
     getSuccessiveMonths(ym1, ym2).map(getQuarter).distinct
 

@@ -42,8 +42,8 @@ object PullRequestsService {
     prs <- getPRs(gh, org, repoNames)
     members <- utils.getOrgMembers[F](gh, org)
     (prsByMember, prsByNonMember) = prs.partition(pr => members.toSet.contains(pr.author))
-    memberPRsCounted = utils.computeMonthlyTimeline(prsByMember.map(_.created.take(7)))._1
-    nonMemberPRsCounted = utils.computeMonthlyTimeline(prsByNonMember.map(_.created.take(7)))._1
+    memberPRsCounted = utils.computeQuarterlyTimeline(prsByMember.map(_.created.take(7)))
+    nonMemberPRsCounted = utils.computeQuarterlyTimeline(prsByNonMember.map(_.created.take(7)))
   } yield GHObjectTimeline(memberPRsCounted, nonMemberPRsCounted)
 
   def getPRs[F[_]: Sync](
