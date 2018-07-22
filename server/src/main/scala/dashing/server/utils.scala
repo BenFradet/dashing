@@ -40,7 +40,7 @@ object utils {
     maxMonth <- Try(YearMonth.parse(max)).toOption
     successiveMonths = getSuccessiveMonths(minMonth, maxMonth).map(_.toString)
     counts = cumulativeCount(timeline)
-    filledTL = fillTimeline(successiveMonths, counts)
+    filledTL = fillCumulativeTimeline(successiveMonths, counts)
     dataPoints = filledTL._1.map(t => DataPoint(t._1, t._2.toDouble))
   } yield (dataPoints, filledTL._2)).getOrElse((List.empty, 0))
 
@@ -57,7 +57,7 @@ object utils {
       Stream.iterate(ym2)(_.plusMonths(1)).takeWhile(!_.isAfter(ym1))
     }).toList
 
-  def fillTimeline[T](timeline: List[T], counts: Map[T, Int]): (List[(T, Int)], Int) = {
+  def fillCumulativeTimeline[T](timeline: List[T], counts: Map[T, Int]): (List[(T, Int)], Int) = {
     val tl = timeline.foldLeft((List.empty[(T, Int)], 0)) { case ((acc, cnt), e) =>
       val c = counts.getOrElse(e, cnt)
       ((e, c) :: acc, c)
@@ -66,9 +66,9 @@ object utils {
   }
 
   def cumulativeCount[T](list: List[T]): Map[T, Int] =
-    list.foldLeft((Map.empty[T, Int], 0)) { case ((m, c), month) =>
-      val cnt = m.getOrElse(month, c) + 1
-      (m + (month -> cnt), cnt)
+    list.foldLeft((Map.empty[T, Int], 0)) { case ((m, c), e) =>
+      val cnt = m.getOrElse(e, c) + 1
+      (m + (e -> cnt), cnt)
     }._1
 
   def autoPaginate[F[_]: Sync, T](
