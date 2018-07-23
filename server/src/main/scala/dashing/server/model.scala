@@ -17,7 +17,9 @@ object model {
     port: Int
   )
 
-  final case class Quarter(year: Int, quarter: Int)
+  final case class Quarter(year: Int, quarter: Int) {
+    override def toString: String = s"Q$quarter $year"
+  }
 
   final case class DataPoint(label: String, value: Double)
   type Timeline = List[DataPoint]
