@@ -27,14 +27,8 @@ object model {
     def empty = RepoState("", List.empty, 0)
   }
 
-  @js.native
-  trait GHObjectTimeline extends js.Object {
-    def members: js.Array[DataPoint]
-    def nonMembers: js.Array[DataPoint]
-  }
-
-  final case class GHObjectState(members: List[DataPoint], nonMembers: List[DataPoint])
+  final case class GHObjectState(nonMembers: List[DataPoint])
   object GHObjectState {
-    def empty = GHObjectState(List.empty, List.empty)
+    def empty = GHObjectState(List.empty)
   }
 }

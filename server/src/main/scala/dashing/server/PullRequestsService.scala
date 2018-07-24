@@ -16,7 +16,7 @@ import org.http4s.HttpService
 import org.http4s.dsl.Http4sDsl
 import scalaj.http.HttpResponse
 
-import model.{GHObject, GHObjectTimeline}
+import model.{GHObject, Timeline}
 
 class PullRequestsService[F[_]: Effect: Timer] extends Http4sDsl[F] {
   import PullRequestsService._
@@ -36,15 +36,14 @@ class PullRequestsService[F[_]: Effect: Timer] extends Http4sDsl[F] {
 
 object PullRequestsService {
 
-  def getPRs[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, GHObjectTimeline] = for {
+  def getPRs[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, Timeline] = for {
     repos <- utils.getRepos[F](gh, org)
     repoNames = repos.map(_.name)
     prs <- getPRs(gh, org, repoNames)
     members <- utils.getOrgMembers[F](gh, org)
-    (prsByMember, prsByNonMember) = prs.partition(pr => members.toSet.contains(pr.author))
-    memberPRsCounted = utils.computeQuarterlyTimeline(prsByMember.map(_.created.take(7)))
+    prsByNonMember = prs.filterNot(pr => members.toSet.contains(pr.author))
     nonMemberPRsCounted = utils.computeQuarterlyTimeline(prsByNonMember.map(_.created.take(7)))
-  } yield GHObjectTimeline(memberPRsCounted, nonMemberPRsCounted)
+  } yield nonMemberPRsCounted
 
   def getPRs[F[_]: Sync](
     gh: Github,
