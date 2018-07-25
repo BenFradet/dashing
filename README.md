@@ -45,4 +45,13 @@ heroRepo = snowplow
 
 # Number of most popular repositories to analyze (hero repo excluded)
 topNRepos = 5
+
+# Duration for which data from GitHub is cached
+cacheDuration = 12 hours
+
+# Host the server should bind to
+host = localhost
+
+# Port the server should bind to
+port = 8080
 ```
