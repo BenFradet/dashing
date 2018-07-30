@@ -26,7 +26,6 @@ object model {
 
   final case class GHObject(author: String, created: String)
 
-  final case class GHObjectTimeline(members: Timeline, nonMembers: Timeline)
   final case class Repo(name: String, starsTimeline: Timeline, stars: Int)
   object Repo {
     implicit val repoMonoid: Monoid[Repo] = new Monoid[Repo] {
