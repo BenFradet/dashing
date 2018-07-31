@@ -66,7 +66,7 @@ object StarsService {
     othersCombined = Monoid.combineAll(sorted.drop(n))
     others = othersCombined.copy(
       name = "others",
-      starsTimeline = othersCombined.starsTimeline.sortBy(_.label)
+      starsTimeline = othersCombined.starsTimeline.sortBy(_.label).dropRight(1)
     )
   } yield Repos(others :: topN)
 
