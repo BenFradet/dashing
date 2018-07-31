@@ -22,7 +22,7 @@ object ChartDataset {
     label: String,
     borderColor: String = "#408080",
     backgroundColor: String = "rgba(0, 0, 0, 0)",
-    borderWidth: Int = 0
+    borderWidth: Int = 2
   ): ChartDataset =
     js.Dynamic.literal(
       label = label,
