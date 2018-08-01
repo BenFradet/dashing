@@ -76,6 +76,12 @@ lazy val client = project.in(file("client"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(sharedJS)
 
+import com.typesafe.sbt.packager.docker._
+dockerBaseImage := "openjdk:8u171-jre-alpine"
+dockerExposedPorts := Seq(8080)
+dockerExposedVolumes := Seq("/dashing/config")
+maintainer in Docker := "Ben Fradet <https://github.com/BenFradet>"
+
 lazy val http4sVersion = "0.18.13"
 lazy val github4sVersion = "0.18.6"
 lazy val circeVersion = "0.9.3"
@@ -117,4 +123,5 @@ lazy val server = project.in(file("server"))
     (managedResources in Compile) +=
       (artifactPath in (client, Compile, packageJSDependencies)).value
   )
+  .enablePlugins(JavaServerAppPackaging)
   .dependsOn(sharedJVM)
