@@ -95,21 +95,13 @@ object Chart {
     }
     .componentDidMount { scope =>
       // can't be factored out
-      scope.getDOMNode match {
-        case Right(n) =>
-          val canvas = n.asInstanceOf[HTMLCanvasElement].getContext("2d")
-          draw(canvas, scope.props)
-        case Left(e) => Callback(println(e))
-      }
+      val canvas = scope.getDOMNode.asElement().asInstanceOf[HTMLCanvasElement].getContext("2d")
+      draw(canvas, scope.props)
     }
     .componentWillReceiveProps { scope =>
       // can't be factored out
-      scope.getDOMNode match {
-        case Right(n) =>
-          val canvas = n.asInstanceOf[HTMLCanvasElement].getContext("2d")
-          draw(canvas, scope.nextProps)
-        case Left(e) => Callback(println(e))
-      }
+      val canvas = scope.getDOMNode.asElement().asInstanceOf[HTMLCanvasElement].getContext("2d")
+      draw(canvas, scope.nextProps)
     }
     .build
 
