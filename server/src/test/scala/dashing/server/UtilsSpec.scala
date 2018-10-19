@@ -33,6 +33,20 @@ class UtilsSpec extends Specification with Http4sMatchers {
     }
   }
 
+  "utils.computeQuarterlyTimeline" should {
+    "compute a quarterly count" in {
+      utils.computeQuarterlyTimeline(List("2018-01", "2018-12")) must_== List(
+        DataPoint("Q1 2018", 1d),
+        DataPoint("Q2 2018", 0d),
+        DataPoint("Q3 2018", 0d),
+        DataPoint("Q4 2018", 1d)
+      )
+    }
+    "return an empty list if the timeline doesn't contain YYYY-MM" in {
+      utils.computeQuarterlyTimeline(List("test", "test2")) must_== Nil
+    }
+  }
+
   "utils.computeMonthlyTimeline" should {
     "compute a monthly count" in {
       utils.computeMonthlyTimeline(List("2018-01", "2018-05")) must_== List(
