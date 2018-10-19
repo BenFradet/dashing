@@ -43,7 +43,7 @@ class PullRequestsService[F[_]: Effect: Timer] extends Http4sDsl[F] {
 object PullRequestsService {
   def getMonthlyPRs[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, Timeline] = for {
     prs <- getPRs(gh, org)
-    monthlyPRs = utils.computeMonthlyTimeline(prs.map(_.created.take(7)))._1
+    monthlyPRs = utils.computeMonthlyTimeline(prs.map(_.created.take(7)))
   } yield monthlyPRs
 
   def getQuarterlyPRs[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, Timeline] = for {

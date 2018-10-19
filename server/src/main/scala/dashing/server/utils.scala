@@ -33,7 +33,7 @@ object utils {
       members = ms.map(_.login)
     } yield members
 
-  def computeMonthlyTimeline(timeline: List[String]): (Timeline, Int) = (for {
+  def computeCumulativeMonthlyTimeline(timeline: List[String]): (Timeline, Int) = (for {
     min <- timeline.minimumOption
     max <- timeline.maximumOption
     minMonth <- Try(YearMonth.parse(min)).toOption
@@ -43,6 +43,19 @@ object utils {
     filledTL = fillCumulativeTimeline(successiveMonths, counts)
     dataPoints = filledTL._1.map(t => DataPoint(t._1, t._2.toDouble))
   } yield (dataPoints, filledTL._2)).getOrElse((List.empty, 0))
+
+  def computeMonthlyTimeline(timeline: List[String]): Timeline = (for {
+    min <- timeline.minimumOption
+    max <- timeline.maximumOption
+    minMonth <- Try(YearMonth.parse(min)).toOption
+    maxMonth <- Try(YearMonth.parse(max)).toOption
+    successiveMonths = getSuccessiveMonths(minMonth, maxMonth)
+    yearMonths <- timeline
+      .map(ym => Try(YearMonth.parse(ym)).toOption)
+      .sequence
+    counts = count(yearMonths)
+    filledTL = successiveMonths.map(e => DataPoint(e.toString, counts.getOrElse(e, 0).toDouble))
+  } yield filledTL).getOrElse(List.empty)
 
   def computeQuarterlyTimeline(timeline: List[String]): Timeline = (for {
     min <- timeline.minimumOption
