@@ -27,23 +27,37 @@ class PullRequestsService[F[_]: Effect: Timer] extends Http4sDsl[F] {
     org: String
   )(implicit ec: ExecutionContext): HttpService[F] =
     HttpService[F] {
-      case GET -> Root / "prs" => for {
-        prs <- cache.lookupOrInsert("prs", getPRs(Github(Some(token)), org).value.map(_.map(_.asJson.noSpaces)))
+      case GET -> Root / "prs-quarterly" => for {
+        prs <- cache.lookupOrInsert("prs-quarterly",
+          getQuarterlyPRs(Github(Some(token)), org).value.map(_.map(_.asJson.noSpaces)))
+        res <- prs.fold(ex => NotFound(ex.getMessage), t => Ok(t))
+      } yield res
+      case GET -> Root / "prs-monthly" => for {
+        prs <- cache.lookupOrInsert("prs-monthly",
+          getMonthlyPRs(Github(Some(token)), org).value.map(_.map(_.asJson.noSpaces)))
         res <- prs.fold(ex => NotFound(ex.getMessage), t => Ok(t))
       } yield res
     }
 }
 
 object PullRequestsService {
+  def getMonthlyPRs[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, Timeline] = for {
+    prs <- getPRs(gh, org)
+    monthlyPRs = utils.computeMonthlyTimeline(prs.map(_.created.take(7)))._1
+  } yield monthlyPRs
 
-  def getPRs[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, Timeline] = for {
+  def getQuarterlyPRs[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, Timeline] = for {
+    prs <- getPRs(gh, org)
+    quarterlyPRs = utils.computeQuarterlyTimeline(prs.map(_.created.take(7)))
+  } yield quarterlyPRs
+
+  def getPRs[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, List[GHObject]] = for {
     repos <- utils.getRepos[F](gh, org)
     repoNames = repos.map(_.name)
     prs <- getPRs(gh, org, repoNames)
     members <- utils.getOrgMembers[F](gh, org)
     prsByNonMember = prs.filterNot(pr => members.toSet.contains(pr.author))
-    nonMemberPRsCounted = utils.computeQuarterlyTimeline(prsByNonMember.map(_.created.take(7)))
-  } yield nonMemberPRsCounted
+  } yield prsByNonMember
 
   def getPRs[F[_]: Sync](
     gh: Github,

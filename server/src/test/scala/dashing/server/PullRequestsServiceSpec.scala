@@ -20,9 +20,12 @@ class PullRequestsServiceSpec extends Specification with IOMatchers {
   } yield service).unsafeRunSync
 
   "PullRequestsService" should {
-    "respond to /prs" in {
-      val response = serve(Request(GET, Uri(path = "/prs")))
-      println(response)
+    "respond to /prs-quarterly" in {
+      val response = serve(Request(GET, Uri(path = "/prs-quarterly")))
+      response.status must_== (Ok)
+    }
+    "respond to /prs-monthly" in {
+      val response = serve(Request(GET, Uri(path = "/prs-monthly")))
       response.status must_== (Ok)
     }
   }
