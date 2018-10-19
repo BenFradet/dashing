@@ -34,8 +34,23 @@ class UtilsSpec extends Specification with Http4sMatchers {
   }
 
   "utils.computeMonthlyTimeline" should {
-    "compute a monthly cumulative count" in {
+    "compute a monthly count" in {
       utils.computeMonthlyTimeline(List("2018-01", "2018-05")) must_== List(
+        DataPoint("2018-01", 1d),
+        DataPoint("2018-02", 0d),
+        DataPoint("2018-03", 0d),
+        DataPoint("2018-04", 0d),
+        DataPoint("2018-05", 1d)
+      )
+    }
+    "return an empty list if the timeline doesn't contain YYYY-MM" in {
+      utils.computeMonthlyTimeline(List("test", "test2")) must_== Nil
+    }
+  }
+
+  "utils.computeCumulativeMonthlyTimeline" should {
+    "compute a monthly cumulative count" in {
+      utils.computeCumulativeMonthlyTimeline(List("2018-01", "2018-05")) must_== List(
         DataPoint("2018-01", 1d),
         DataPoint("2018-02", 1d),
         DataPoint("2018-03", 1d),
@@ -44,7 +59,7 @@ class UtilsSpec extends Specification with Http4sMatchers {
       ) -> 2
     }
     "return an empty list if the timeline doesn't contain YYYY-MM" in {
-      utils.computeMonthlyTimeline(List("test", "test2")) must_== Nil -> 0d
+      utils.computeCumulativeMonthlyTimeline(List("test", "test2")) must_== Nil -> 0d
     }
   }
 
