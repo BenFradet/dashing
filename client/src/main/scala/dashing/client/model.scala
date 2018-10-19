@@ -7,7 +7,8 @@ object model {
   case object Home extends Dashboard
   case object HeroRepoDash extends Dashboard
   case object TopNReposDash extends Dashboard
-  case object PRsDash extends Dashboard
+  case object QuarterlyPRsDash extends Dashboard
+  case object MonthlyPRsDash extends Dashboard
 
   @js.native
   trait DataPoint extends js.Object {

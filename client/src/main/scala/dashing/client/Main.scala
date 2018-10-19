@@ -16,11 +16,12 @@ object Main {
       | staticRoute(root, Home) ~> render(home)
       | staticRoute("#hero-repo", HeroRepoDash) ~> renderR(ctl => HeroRepoDashboard(ctl))
       | staticRoute("#topn-repos", TopNReposDash) ~> renderR(ctl => TopNReposDashboard(ctl))
-      | staticRoute("#prs", PRsDash) ~> renderR(ctl => PRsDashboard(ctl))
+      | staticRoute("#prs-quarterly", QuarterlyPRsDash) ~> renderR(ctl => QuarterlyPRsDashboard(ctl))
+      | staticRoute("#prs-monthly", MonthlyPRsDash) ~> renderR(ctl => MonthlyPRsDashboard(ctl))
     ).notFound(redirectToPage(Home)(Redirect.Replace))
       .setTitle(p => s"Dashboard $p | Dashing")
       .renderWith(layout)
-      .verify(Home, HeroRepoDash, TopNReposDash, PRsDash)
+      .verify(Home, HeroRepoDash, TopNReposDash, QuarterlyPRsDash, MonthlyPRsDash)
   }
 
   val home =
@@ -41,7 +42,13 @@ object Main {
         ),
         <.li(
           <.p(
-            <.a(^.href := "#prs", "Opened PRs:"),
+            <.a(^.href := "#prs-quarterly", "Quarterly opened PRs:"),
+            " opened by non-members"
+          )
+        ),
+        <.li(
+          <.p(
+            <.a(^.href := "#prs-monthly", "Monthly opened PRs:"),
             " opened by non-members"
           )
         )
@@ -70,7 +77,8 @@ object Main {
           nav("Home", Home),
           nav("Hero repo stars", HeroRepoDash),
           nav("Top N repos stars", TopNReposDash),
-          nav("Opened PRs", PRsDash)
+          nav("Quaterly opened PRs", QuarterlyPRsDash),
+          nav("Monthly opened PRs", MonthlyPRsDash)
         )
       )
     }

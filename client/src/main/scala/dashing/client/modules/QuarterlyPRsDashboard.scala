@@ -10,10 +10,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import components._
 import model._
 
-object PRsDashboard {
+object QuarterlyPRsDashboard {
   final case class Props(router: RouterCtl[Dashboard])
 
-  private val component = ScalaComponent.builder[Props]("Pull requests dashboard")
+  private val component = ScalaComponent.builder[Props]("Quarterly pull requests dashboard")
     .initialState(GHObjectState.empty)
     .renderBackend[DashboardBackend]
     .componentDidMount(s => s.backend.updatePRs)
@@ -22,14 +22,14 @@ object PRsDashboard {
   final class DashboardBackend($: BackendScope[Props, GHObjectState]) {
 
     def updatePRs = Callback.future {
-      Api.fetchPRs.map { t =>
+      Api.fetchQuarterlyPRs.map { t =>
         $.setState(GHObjectState(t.toList))
       }
     }
 
     def render(s: GHObjectState) = {
       <.div(^.cls := "container",
-        <.h2("Pull requests dashboard"),
+        <.h2("Quarterly pull requests dashboard"),
         Chart(Chart.ChartProps(
           s"Number of pull requests opened by non-members per quarter",
           Chart.BarChart,

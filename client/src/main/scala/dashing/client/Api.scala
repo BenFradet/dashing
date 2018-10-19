@@ -20,8 +20,13 @@ object Api {
       .map(xhr => JSON.parse(xhr.responseText).asInstanceOf[js.Array[Repo]])
       .map(_.toList)
 
-  def fetchPRs: Future[List[DataPoint]] =
-    Ajax.get("/api/prs")
+  def fetchQuarterlyPRs: Future[List[DataPoint]] =
+    Ajax.get("/api/prs-quarterly")
+      .map(xhr => JSON.parse(xhr.responseText).asInstanceOf[js.Array[DataPoint]])
+      .map(_.toList)
+
+  def fetchMonthlyPRs: Future[List[DataPoint]] =
+    Ajax.get("/api/prs-monthly")
       .map(xhr => JSON.parse(xhr.responseText).asInstanceOf[js.Array[DataPoint]])
       .map(_.toList)
 }
