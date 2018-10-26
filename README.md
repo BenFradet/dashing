@@ -26,7 +26,7 @@ the hero repo) as a function of time:
 The number of open pull requests created by people inside and outside the organization as a function
 of time:
 
-![open-prs](https://github.com/BenFradet/dashing/raw/master/screenshots/open_prs.png)
+![opened-prs](https://github.com/BenFradet/dashing/raw/master/screenshots/opened_prs.png)
 
 ## How to use it
 
