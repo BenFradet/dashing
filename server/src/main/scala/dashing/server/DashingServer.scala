@@ -15,6 +15,7 @@ import model.DashingConfig
 
 object DashingServer extends StreamApp[IO] {
   import scala.concurrent.ExecutionContext.Implicits.global
+  implicit val timer = IO.timer(global)
 
   override def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] =
     ServerStream.stream[IO]

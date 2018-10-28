@@ -2,7 +2,7 @@ package dashing.server
 
 import cats._
 import cats.data.OptionT
-import cats.effect.{Sync, Timer}
+import cats.effect.{Clock, Sync}
 import fs2.async.Ref
 import cats.implicits._
 import scala.concurrent.duration._
@@ -22,7 +22,7 @@ class Cache[F[_], K, V] private[Cache] (
     *
     * The function will eagerly delete the item from the cache if it is expired.
     **/
-  def lookup(k: K)(implicit F: Sync[F], T: Timer[F]): F[Option[V]] =
+  def lookup(k: K)(implicit F: Sync[F], C: Clock[F]): F[Option[V]] =
     Cache.lookup(this)(k)
 
   /**
@@ -32,10 +32,10 @@ class Cache[F[_], K, V] private[Cache] (
     *
     * The function will not delete the item from the cache.
     **/
-  def lookupNoUpdate(k: K)(implicit F: Sync[F], T: Timer[F]): F[Option[V]] =
+  def lookupNoUpdate(k: K)(implicit F: Sync[F], C: Clock[F]): F[Option[V]] =
     Cache.lookupNoUpdate(this)(k)
 
-  def lookupOrInsert[E](k: K, v: F[Either[E, V]])(implicit F: Sync[F], T: Timer[F]): F[Either[E, V]] =
+  def lookupOrInsert[E](k: K, v: F[Either[E, V]])(implicit F: Sync[F], C: Clock[F]): F[Either[E, V]] =
     Cache.lookupOrInsert(this)(k, v)
 
   // Inserting
@@ -43,7 +43,7 @@ class Cache[F[_], K, V] private[Cache] (
   /**
     * Insert an item in the cache, using the default expiration value of the cache.
     */
-  def insert(k: K, v: V)(implicit F: Sync[F], T: Timer[F]): F[Unit] =
+  def insert(k: K, v: V)(implicit F: Sync[F], C: Clock[F]): F[Unit] =
     Cache.insert(this)(k, v)
 
   /**
@@ -53,7 +53,7 @@ class Cache[F[_], K, V] private[Cache] (
     *
     * The expiration value is relative to the current clockMonotonic time, i.e. it will be automatically added to the result of clockMonotonic for the supplied unit.
     **/
-  def insertWithTimeout(timeout: Option[Cache.TimeSpec])(k: K, v: V)(implicit F: Sync[F], T: Timer[F]) =
+  def insertWithTimeout(timeout: Option[Cache.TimeSpec])(k: K, v: V)(implicit F: Sync[F], C: Clock[F]) =
     Cache.insertWithTimeout(this)(timeout)(k, v)
 
   // Deleting
@@ -67,7 +67,7 @@ class Cache[F[_], K, V] private[Cache] (
     *
     * This is one big atomic operation.
     **/
-  def purgeExpired(implicit F: Sync[F], T: Timer[F]) = Cache.purgeExpired(this)
+  def purgeExpired(implicit F: Sync[F], C: Clock[F]) = Cache.purgeExpired(this)
 
   // Informational
 
@@ -135,7 +135,7 @@ object Cache {
   /**
     * Insert an item in the cache, using the default expiration value of the cache.
     */
-  def insert[F[_]: Sync : Timer, K, V](cache: Cache[F, K, V])(k: K, v: V): F[Unit] =
+  def insert[F[_]: Sync : Clock, K, V](cache: Cache[F, K, V])(k: K, v: V): F[Unit] =
     insertWithTimeout(cache)(cache.defaultExpiration)(k, v)
 
   /**
@@ -145,9 +145,9 @@ object Cache {
     *
     * The expiration value is relative to the current clockMonotonic time, i.e. it will be automatically added to the result of clockMonotonic for the supplied unit.
     **/
-  def insertWithTimeout[F[_]: Sync: Timer, K, V](cache: Cache[F, K, V])(optionTimeout: Option[TimeSpec])(k: K, v: V): F[Unit] =
+  def insertWithTimeout[F[_]: Sync, K, V](cache: Cache[F, K, V])(optionTimeout: Option[TimeSpec])(k: K, v: V)(implicit C: Clock[F]): F[Unit] =
     for {
-      now <- Timer[F].clockMonotonic(NANOSECONDS)
+      now <- C.monotonic(NANOSECONDS)
       timeout = optionTimeout.map(ts => TimeSpec.unsafeFromNanos(now + ts.nanos))
       _ <- cache.ref.modify(_.+=((k -> CacheItem[V](v, timeout))))
     } yield ()
@@ -198,12 +198,12 @@ object Cache {
     *
     * The function will eagerly delete the item from the cache if it is expired.
     **/
-  def lookup[F[_]: Sync : Timer, K, V](c: Cache[F, K, V])(k: K): F[Option[V]] =
-    Timer[F].clockMonotonic(NANOSECONDS)
+  def lookup[F[_]: Sync, K, V](c: Cache[F, K, V])(k: K)(implicit C: Clock[F]): F[Option[V]] =
+    C.monotonic(NANOSECONDS)
       .flatMap(now => lookupItemT(true, k, c, TimeSpec.unsafeFromNanos(now)))
       .map(_.map(_.item))
 
-  def lookupOrInsert[F[_]: Sync : Timer, K, V, E](c: Cache[F, K, V])(k: K, v: F[Either[E, V]]): F[Either[E, V]] = for {
+  def lookupOrInsert[F[_]: Sync : Clock, K, V, E](c: Cache[F, K, V])(k: K, v: F[Either[E, V]]): F[Either[E, V]] = for {
     cached <- c.lookup(k)
     res <- cached match {
       case Some(value) => Sync[F].pure(Right(value))
@@ -224,8 +224,8 @@ object Cache {
     *
     * The function will not delete the item from the cache.
     **/
-  def lookupNoUpdate[F[_]: Sync: Timer, K, V](c: Cache[F, K, V])(k: K): F[Option[V]] =
-    Timer[F].clockMonotonic(NANOSECONDS)
+  def lookupNoUpdate[F[_]: Sync, K, V](c: Cache[F, K, V])(k: K)(implicit C: Clock[F]): F[Option[V]] =
+    C.monotonic(NANOSECONDS)
       .flatMap(now => lookupItemT(false, k, c, TimeSpec.unsafeFromNanos(now)))
       .map(_.map(_.item))
 
@@ -234,11 +234,11 @@ object Cache {
     *
     * This is one big atomic operation.
     **/
-  def purgeExpired[F[_]: Sync: Timer, K, V](c: Cache[F, K, V]): F[Unit] = {
+  def purgeExpired[F[_]: Sync, K, V](c: Cache[F, K, V])(implicit C: Clock[F]): F[Unit] = {
     def purgeKeyIfExpired(m: Map[K, CacheItem[V]], k: K, checkAgainst: TimeSpec): Unit =
       m.get(k).fold(())(item => if (isExpired(checkAgainst, item)) {m.-=(k); ()} else ())
     for {
-      now <- Timer[F].clockMonotonic(NANOSECONDS)
+      now <- C.monotonic(NANOSECONDS)
       _ <- c.ref.modify(m => {m.keys.toList.map(k => purgeKeyIfExpired(m, k, TimeSpec.unsafeFromNanos(now))); m}) // One Big Transactional Change
     } yield ()
   }
