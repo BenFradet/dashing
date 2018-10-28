@@ -4,12 +4,12 @@ import java.time.YearMonth
 
 import cats.effect.IO
 import github4s.Github
-import org.http4s.testing.Http4sMatchers
+import org.http4s.testing.{Http4sMatchers, IOMatchers}
 import org.specs2.mutable.Specification
 
 import model._
 
-class UtilsSpec extends Specification with Http4sMatchers {
+class UtilsSpec extends Specification with Http4sMatchers[IO] with IOMatchers {
 
   val gh = Github(sys.env.get("GITHUB4S_ACCESS_TOKEN"))
 

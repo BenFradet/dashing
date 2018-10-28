@@ -12,6 +12,8 @@ import org.specs2.mutable.Specification
 class PullRequestsServiceSpec extends Specification with IOMatchers {
   args(skipAll = sys.env.get("GITHUB4S_ACCESS_TOKEN").isEmpty)
 
+  implicit val timer = IO.timer(global)
+
   def serve(req: Request[IO]): Response[IO] = (for {
     cache <- Cache.createCache[IO, String, String](Cache.TimeSpec.fromDuration(12.hours))
     service <- new PullRequestsService[IO]()
