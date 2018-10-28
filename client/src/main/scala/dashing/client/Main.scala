@@ -58,7 +58,17 @@ object Main {
   def layout(c: RouterCtl[Dashboard], r: Resolution[Dashboard]) =
     <.div(
       navMenu(c),
-      <.div(^.cls := "container", r.render())
+      <.div(^.cls := "container", r.render()),
+      footer
+    )
+
+  val footer =
+    <.div(^.cls := "footer",
+      <.p(
+        "This project is open source, check it out on ",
+        <.a(^.href := "https://github.com/benfradet/dashing", "Github"),
+        "."
+      )
     )
 
   val navMenu = ScalaComponent.builder[RouterCtl[Dashboard]]("Menu")

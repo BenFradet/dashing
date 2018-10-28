@@ -76,6 +76,15 @@ div.picture.favorite:after{
 }
 
 section.demo {
-  padding-bottom: 0.5em;
+    padding-bottom: 0.5em;
 }
 
+.footer {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 1rem;
+    background-color: #ffffff;
+    text-align: center;
+}
