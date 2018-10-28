@@ -83,7 +83,7 @@ dockerExposedVolumes := Seq("/dashing/config")
 maintainer in Docker := "Ben Fradet <https://github.com/BenFradet>"
 
 lazy val http4sVersion = "0.18.20"
-lazy val github4sVersion = "0.18.8"
+lazy val github4sVersion = "0.19.0"
 lazy val circeVersion = "0.10.0"
 lazy val circeConfigVersion = "0.5.0"
 lazy val scalatagsVersion = "0.6.7"
