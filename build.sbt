@@ -84,7 +84,7 @@ maintainer in Docker := "Ben Fradet <https://github.com/BenFradet>"
 
 lazy val http4sVersion = "0.19.0"
 lazy val github4sVersion = "0.19.0"
-lazy val circeVersion = "0.10.1"
+lazy val circeVersion = "0.11.0"
 lazy val circeConfigVersion = "0.5.0"
 lazy val scalatagsVersion = "0.6.7"
 lazy val logbackVersion = "1.2.3"
