@@ -22,7 +22,7 @@ lazy val baseSettings = Seq(
   scalacOptions in (Test, console) ~= {
     _.filterNot(Set("-Ywarn-unused-import"))
   },
-  scalaVersion := "2.12.6",
+  scalaVersion := "2.12.8",
   version := "0.1.0-SNAPSHOT"
 )
 
