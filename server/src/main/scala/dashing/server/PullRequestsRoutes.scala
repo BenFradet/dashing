@@ -12,21 +12,21 @@ import github4s.free.domain._
 import github4s.cats.effect.jvm.Implicits._
 import io.circe.generic.auto._
 import io.circe.syntax._
-import org.http4s.HttpService
+import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import scalaj.http.HttpResponse
 
 import model.{GHObject, Timeline}
 
-class PullRequestsService[F[_]: Effect: Timer] extends Http4sDsl[F] {
-  import PullRequestsService._
+class PullRequestsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
+  import PullRequestsRoutes._
 
-  def service(
+  def routes(
     cache: Cache[F, String, String],
     token: String,
     org: String
-  )(implicit ec: ExecutionContext): HttpService[F] =
-    HttpService[F] {
+  )(implicit ec: ExecutionContext): HttpRoutes[F] =
+    HttpRoutes.of[F] {
       case GET -> Root / "prs-quarterly" => for {
         prs <- cache.lookupOrInsert("prs-quarterly",
           getQuarterlyPRs(Github(Some(token)), org).value.map(_.map(_.asJson.noSpaces)))
@@ -40,7 +40,7 @@ class PullRequestsService[F[_]: Effect: Timer] extends Http4sDsl[F] {
     }
 }
 
-object PullRequestsService {
+object PullRequestsRoutes {
   def getMonthlyPRs[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, Timeline] = for {
     prs <- getPRs(gh, org)
     monthlyPRs = utils.computeMonthlyTimeline(prs.map(_.created.take(7)))

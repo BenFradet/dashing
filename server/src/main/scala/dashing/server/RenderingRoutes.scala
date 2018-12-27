@@ -4,11 +4,11 @@ import scala.concurrent.ExecutionContext
 
 import cats.effect.{ContextShift, Effect}
 import cats.syntax.functor._
-import org.http4s.{Charset, HttpService, MediaType, Request, StaticFile}
+import org.http4s.{Charset, HttpRoutes, MediaType, Request, StaticFile}
 import org.http4s.dsl.Http4sDsl
 import org.http4s.headers._
 
-class RenderingService[F[_]: Effect: ContextShift](ec: ExecutionContext) extends Http4sDsl[F] {
+class RenderingRoutes[F[_]: Effect: ContextShift](ec: ExecutionContext) extends Http4sDsl[F] {
 
   val index = {
     import scalatags.Text.all._
@@ -32,7 +32,7 @@ class RenderingService[F[_]: Effect: ContextShift](ec: ExecutionContext) extends
       .orElse(StaticFile.fromURL(getClass.getResource("/" + file), ec, Some(req)))
       .getOrElseF(NotFound())
 
-  val service = HttpService[F] {
+  val routes: HttpRoutes[F] = HttpRoutes.of[F] {
     case GET -> Root =>
       Ok(index.render)
         .map(_.withContentType(`Content-Type`(new MediaType("text", "html"), Charset.`UTF-8`)))

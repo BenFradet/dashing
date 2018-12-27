@@ -14,24 +14,24 @@ import github4s.free.domain._
 import github4s.cats.effect.jvm.Implicits._
 import io.circe.generic.auto._
 import io.circe.syntax._
-import org.http4s.HttpService
+import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import scalaj.http.HttpResponse
 
 import model.{Repo, Repos}
 
-class StarsService[F[_]: Effect: Timer] extends Http4sDsl[F] {
-  import StarsService._
+class StarsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
+  import StarsRoutes._
 
-  def service(
+  def routes(
     cache: Cache[F, String, String],
     token: String,
     org: String,
     heroRepo: String,
     topN: Int
-  )(implicit ec: ExecutionContext): HttpService[F] = {
+  )(implicit ec: ExecutionContext): HttpRoutes[F] = {
     val gh = Github(Some(token))
-    HttpService[F] {
+    HttpRoutes.of[F] {
       case GET -> Root / "stars" / "top-n" => for {
         topN <- cache.lookupOrInsert("top-n",
           getTopN(gh, org, topN, heroRepo).value.map(_.map(_.repos.asJson.noSpaces)))
@@ -46,7 +46,7 @@ class StarsService[F[_]: Effect: Timer] extends Http4sDsl[F] {
   }
 }
 
-object StarsService {
+object StarsRoutes {
 
   def getTopN[F[_]: Sync](
     gh: Github,
