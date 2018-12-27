@@ -5,14 +5,15 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import cats.effect.{ContextShift, IO}
 import org.http4s._
 import org.http4s.dsl.io._
+import org.http4s.syntax.kleisli._
 import org.http4s.testing.IOMatchers
 import org.specs2.mutable.Specification
 
-class RenderingServiceSpec extends Specification with IOMatchers {
+class RenderingRoutesSpec extends Specification with IOMatchers {
   implicit val cs: ContextShift[IO] = IO.contextShift(global)
 
   def serve(req: Request[IO]): Response[IO] =
-    new RenderingService[IO](global).service.orNotFound(req).unsafeRunSync
+    new RenderingRoutes[IO](global).routes.orNotFound(req).unsafeRunSync
 
   val index = """
     |<html>
@@ -29,7 +30,7 @@ class RenderingServiceSpec extends Specification with IOMatchers {
       |</body>
     |</html>""".stripMargin.replaceAll("\n", "")
 
-  "RenderingService" should {
+  "RenderingRoutes" should {
     "respond to / with index.html" in {
       val response = serve(Request(GET, Uri(path = "/")))
       response.status must_== (Ok)
