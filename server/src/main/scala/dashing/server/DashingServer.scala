@@ -6,6 +6,7 @@ import cats.effect.{ConcurrentEffect, ContextShift, ExitCode, IO, IOApp, Timer}
 import cats.implicits._
 import com.typesafe.config.ConfigFactory
 import fs2.Stream
+import io.chrisdavenport.mules.{Cache, TimeSpec}
 import io.circe.generic.auto._
 import io.circe.config.syntax._
 import org.http4s.server.Router
@@ -30,7 +31,7 @@ object ServerStream {
       case Right(c) =>
         for {
           cache <- Stream.eval(
-            Cache.createCache[F, String, String](Cache.TimeSpec.fromDuration(c.cacheDuration)))
+            Cache.createCache[F, String, String](TimeSpec.fromDuration(c.cacheDuration)))
           apiService =
             new StarsRoutes[F].routes(cache, c.ghToken, c.org, c.heroRepo, c.topNRepos) <+>
             new PullRequestsRoutes[F]().routes(cache, c.ghToken, c.org)

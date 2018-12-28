@@ -87,6 +87,7 @@ lazy val github4sVersion = "0.20.0"
 lazy val circeVersion = "0.11.0"
 lazy val circeConfigVersion = "0.5.0"
 lazy val scalatagsVersion = "0.6.7"
+lazy val mulesVersion = "0.2.0-M2"
 lazy val logbackVersion = "1.2.3"
 lazy val specs2Version = "4.3.6"
 
@@ -106,6 +107,7 @@ lazy val server = project.in(file("server"))
     ).map(_ % circeVersion) ++ Seq(
       "com.lihaoyi" %% "scalatags" % scalatagsVersion,
       "io.circe" %% "circe-config" % circeConfigVersion,
+      "io.chrisdavenport" %% "mules" % mulesVersion,
       "ch.qos.logback" % "logback-classic" % logbackVersion
     ) ++ Seq(
       "org.specs2" %% "specs2-core" % specs2Version,

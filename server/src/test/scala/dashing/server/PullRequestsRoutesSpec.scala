@@ -4,6 +4,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 import cats.effect.IO
+import io.chrisdavenport.mules.{Cache, TimeSpec}
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.syntax.kleisli._
@@ -16,7 +17,7 @@ class PullRequestsRoutesSpec extends Specification with IOMatchers {
   implicit val timer = IO.timer(global)
 
   def serve(req: Request[IO]): Response[IO] = (for {
-    cache <- Cache.createCache[IO, String, String](Cache.TimeSpec.fromDuration(12.hours))
+    cache <- Cache.createCache[IO, String, String](TimeSpec.fromDuration(12.hours))
     service <- new PullRequestsRoutes[IO]()
       .routes(cache, sys.env.getOrElse("GITHUB4S_ACCESS_TOKEN", ""), "igwp")
       .orNotFound(req)

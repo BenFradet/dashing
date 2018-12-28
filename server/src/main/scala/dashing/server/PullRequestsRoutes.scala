@@ -10,6 +10,7 @@ import github4s.Github._
 import github4s.GithubResponses._
 import github4s.free.domain._
 import github4s.cats.effect.jvm.Implicits._
+import io.chrisdavenport.mules.Cache
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.http4s.HttpRoutes
@@ -28,12 +29,12 @@ class PullRequestsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
   )(implicit ec: ExecutionContext): HttpRoutes[F] =
     HttpRoutes.of[F] {
       case GET -> Root / "prs-quarterly" => for {
-        prs <- cache.lookupOrInsert("prs-quarterly",
+        prs <- utils.lookupOrInsert(cache)("prs-quarterly",
           getQuarterlyPRs(Github(Some(token)), org).value.map(_.map(_.asJson.noSpaces)))
         res <- prs.fold(ex => NotFound(ex.getMessage), t => Ok(t))
       } yield res
       case GET -> Root / "prs-monthly" => for {
-        prs <- cache.lookupOrInsert("prs-monthly",
+        prs <- utils.lookupOrInsert(cache)("prs-monthly",
           getMonthlyPRs(Github(Some(token)), org).value.map(_.map(_.asJson.noSpaces)))
         res <- prs.fold(ex => NotFound(ex.getMessage), t => Ok(t))
       } yield res

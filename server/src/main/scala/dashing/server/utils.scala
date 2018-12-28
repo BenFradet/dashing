@@ -4,13 +4,14 @@ import java.time.YearMonth
 import java.time.temporal.IsoFields
 
 import cats.data.EitherT
-import cats.effect.Sync
+import cats.effect.{Clock, Sync}
 import cats.implicits._
 import github4s.Github
 import github4s.Github._
 import github4s.GithubResponses._
 import github4s.free.domain._
 import github4s.cats.effect.jvm.Implicits._
+import io.chrisdavenport.mules.Cache
 import org.http4s.Uri
 import scalaj.http.HttpResponse
 
@@ -127,6 +128,22 @@ object utils {
     lastPage <- uri.params.get("page")
     nrPages <- Try(lastPage.toInt).toOption
   } yield nrPages
+
+  def lookupOrInsert[F[_]: Sync : Clock, K, V, E](
+    c: Cache[F, K, V]
+  )(k: K, v: F[Either[E, V]]): F[Either[E, V]] = for {
+    cached <- c.lookup(k)
+    res <- cached match {
+      case Some(value) => Sync[F].pure(Right(value))
+      case _ => for {
+        value <- v
+        _ <- value match {
+          case Right(va) => c.insert(k, va)
+          case _ => Sync[F].pure(())
+        }
+      } yield value
+    }
+  } yield res
 
   // fucks up syntax highlighting so at the end of the file
   private val relPattern = """<(.*?)>; rel="(\w+)"""".r

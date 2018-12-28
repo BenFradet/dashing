@@ -12,6 +12,7 @@ import github4s.Github._
 import github4s.GithubResponses._
 import github4s.free.domain._
 import github4s.cats.effect.jvm.Implicits._
+import io.chrisdavenport.mules.Cache
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.http4s.HttpRoutes
@@ -33,12 +34,12 @@ class StarsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
     val gh = Github(Some(token))
     HttpRoutes.of[F] {
       case GET -> Root / "stars" / "top-n" => for {
-        topN <- cache.lookupOrInsert("top-n",
+        topN <- utils.lookupOrInsert(cache)("top-n",
           getTopN(gh, org, topN, heroRepo).value.map(_.map(_.repos.asJson.noSpaces)))
         res <- topN.fold(ex => NotFound(ex.getMessage), l => Ok(l))
       } yield res
       case GET -> Root / "stars" / "hero-repo" => for {
-        stars <- cache.lookupOrInsert("hero-repo",
+        stars <- utils.lookupOrInsert(cache)("hero-repo",
           getStars(gh, org, heroRepo).value.map(_.map(_.asJson.noSpaces)))
         res <- stars.fold(ex => NotFound(ex.getMessage), r => Ok(r))
       } yield res
