@@ -9,7 +9,7 @@ import cats.syntax.semigroup._
 object model {
   final case class DashingConfig(
     ghToken: String,
-    org: String,
+    orgs: List[String],
     heroRepo: String,
     topNRepos: Int,
     cacheDuration: FiniteDuration,

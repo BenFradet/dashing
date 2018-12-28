@@ -25,32 +25,47 @@ class PullRequestsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
   def routes(
     cache: Cache[F, String, String],
     token: String,
-    org: String
+    orgs: List[String]
   )(implicit ec: ExecutionContext): HttpRoutes[F] =
     HttpRoutes.of[F] {
       case GET -> Root / "prs-quarterly" => for {
         prs <- utils.lookupOrInsert(cache)("prs-quarterly",
-          getQuarterlyPRs(Github(Some(token)), org).value.map(_.map(_.asJson.noSpaces)))
+          getPRsForOrgs(Github(Some(token)), orgs, getQuarterlyPRs(_, _))
+            .value.map(_.map(_.asJson.noSpaces)))
         res <- prs.fold(ex => NotFound(ex.getMessage), t => Ok(t))
       } yield res
       case GET -> Root / "prs-monthly" => for {
         prs <- utils.lookupOrInsert(cache)("prs-monthly",
-          getMonthlyPRs(Github(Some(token)), org).value.map(_.map(_.asJson.noSpaces)))
+          getPRsForOrgs(Github(Some(token)), orgs, getMonthlyPRs(_, _))
+            .value.map(_.map(_.asJson.noSpaces)))
         res <- prs.fold(ex => NotFound(ex.getMessage), t => Ok(t))
       } yield res
     }
 }
 
 object PullRequestsRoutes {
+
+  def getPRsForOrgs[F[_]: Sync](
+    gh: Github,
+    orgs: List[String],
+    byOrg: (Github, String) => EitherT[F, GHException, Timeline]
+  ): EitherT[F, GHException, List[(String, Timeline)]] =
+    orgs.map(o => (EitherT.rightT[F, GHException](o), byOrg(gh, o)).tupled)
+      .sequence
+
   def getMonthlyPRs[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, Timeline] = for {
     prs <- getPRs(gh, org)
     monthlyPRs = utils.computeMonthlyTimeline(prs.map(_.created.take(7)))
   } yield monthlyPRs
 
-  def getQuarterlyPRs[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, Timeline] = for {
-    prs <- getPRs(gh, org)
-    quarterlyPRs = utils.computeQuarterlyTimeline(prs.map(_.created.take(7)))
-  } yield quarterlyPRs
+  def getQuarterlyPRs[F[_]: Sync](
+    gh: Github,
+    org: String
+  ): EitherT[F, GHException, Timeline] =
+    for {
+      prs <- getPRs(gh, org)
+      quarterlyPRs = utils.computeQuarterlyTimeline(prs.map(_.created.take(7)))
+    } yield quarterlyPRs
 
   def getPRs[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, List[GHObject]] = for {
     repos <- utils.getRepos[F](gh, org)
