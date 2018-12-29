@@ -32,6 +32,9 @@ lazy val client = project.in(file("client"))
     scalaJSUseMainModuleInitializer := true,
     scalaJSUseMainModuleInitializer in Test := false,
     skip in packageJSDependencies := false,
+    scalacOptions in (Compile) ~= {
+      _.filterNot(Set("-Xfatal-warnings"))
+    },
     libraryDependencies ++= Seq(
       "com.github.japgolly.scalajs-react" %%% "core",
       "com.github.japgolly.scalajs-react" %%% "extra"
