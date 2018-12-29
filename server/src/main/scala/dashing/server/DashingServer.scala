@@ -1,6 +1,7 @@
 package dashing.server
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
 import cats.effect.{ConcurrentEffect, ContextShift, ExitCode, IO, IOApp, Timer}
 import cats.implicits._
@@ -42,6 +43,7 @@ object ServerStream {
           server <- BlazeServerBuilder[F]
             .bindHttp(c.port, c.host)
             .withHttpApp(httpApp)
+            .withIdleTimeout(1.minute)
             .serve
         } yield server
       case Left(e) => Stream.eval(ConcurrentEffect[F].delay {
