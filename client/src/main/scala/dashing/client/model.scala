@@ -11,24 +11,18 @@ object model {
   case object MonthlyPRsDash extends Dashboard
 
   @js.native
-  trait DataPoint extends js.Object {
-    def label: String
-    def value: Double
-  }
-
-  @js.native
   trait Repo extends js.Object {
     def name: String
-    def starsTimeline: js.Array[DataPoint]
+    def starsTimeline: js.Dictionary[Double]
     def stars: Int
   }
 
-  final case class RepoState(name: String, starsTimeline: List[DataPoint], stars: Int)
+  final case class RepoState(name: String, starsTimeline: Map[String, Double], stars: Int)
   object RepoState {
-    def empty = RepoState("", List.empty, 0)
+    def empty = RepoState("", Map.empty, 0)
   }
 
-  final case class PRsState(prsByOrg: Map[String, List[DataPoint]])
+  final case class PRsState(prsByOrg: Map[String, Map[String, Double]])
   object PRsState {
     def empty = PRsState(Map.empty)
   }

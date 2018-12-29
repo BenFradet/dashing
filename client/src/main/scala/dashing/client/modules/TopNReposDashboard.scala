@@ -26,7 +26,7 @@ object TopNReposDashboard {
     def updateStars = Callback.future {
       Api.fetchTopNStars
         .map { l =>
-          $.setState(l.map(r => RepoState(r.name, r.starsTimeline.toList, r.stars)))
+          $.setState(l.map(r => RepoState(r.name, r.starsTimeline.toMap, r.stars)))
         }
     }
 
@@ -37,10 +37,10 @@ object TopNReposDashboard {
           s"Top ${s.size} repos stars",
           Chart.LineChart,
           ChartData(
-            s.head.starsTimeline.map(_.label),
+            s.headOption.map(_.starsTimeline.keys.toSeq.sorted).getOrElse(Seq.empty),
             s.zip(Stream.continually(colors).flatten).map { case (r, c) =>
               ChartDataset(
-                r.starsTimeline.map(_.value),
+                r.starsTimeline.toList.sortBy(_._1).map(_._2),
                 s"${r.name}",
                 c
               )

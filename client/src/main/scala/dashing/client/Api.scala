@@ -7,7 +7,7 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSON
 
-import model.{Repo, DataPoint}
+import model.Repo
 
 object Api {
 
@@ -20,13 +20,13 @@ object Api {
       .map(xhr => JSON.parse(xhr.responseText).asInstanceOf[js.Array[Repo]])
       .map(_.toList)
 
-  def fetchQuarterlyPRs: Future[Map[String, List[DataPoint]]] =
+  def fetchQuarterlyPRs: Future[Map[String, Map[String, Double]]] =
     Ajax.get("/api/prs-quarterly")
-      .map(xhr => JSON.parse(xhr.responseText).asInstanceOf[js.Dictionary[js.Array[DataPoint]]])
-      .map(_.mapValues(_.toList).toMap)
+      .map(xhr => JSON.parse(xhr.responseText).asInstanceOf[js.Dictionary[js.Dictionary[Double]]])
+      .map(_.mapValues(_.toMap).toMap)
 
-  def fetchMonthlyPRs: Future[Map[String, List[DataPoint]]] =
+  def fetchMonthlyPRs: Future[Map[String, Map[String, Double]]] =
     Ajax.get("/api/prs-monthly")
-      .map(xhr => JSON.parse(xhr.responseText).asInstanceOf[js.Dictionary[js.Array[DataPoint]]])
-      .map(_.mapValues(_.toList).toMap)
+      .map(xhr => JSON.parse(xhr.responseText).asInstanceOf[js.Dictionary[js.Dictionary[Double]]])
+      .map(_.mapValues(_.toMap).toMap)
 }

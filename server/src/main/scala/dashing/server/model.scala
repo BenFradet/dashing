@@ -18,7 +18,7 @@ object model {
   )
 
   final case class Quarter(year: Int, quarter: Int) {
-    override def toString: String = s"Q$quarter $year"
+    override def toString: String = s"$year Q$quarter"
   }
 
   final case class GHObject(author: String, created: String)

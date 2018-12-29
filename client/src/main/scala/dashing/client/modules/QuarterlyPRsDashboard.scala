@@ -34,10 +34,10 @@ object QuarterlyPRsDashboard {
           s"Number of pull requests opened by non-members per quarter per organization",
           Chart.BarChart,
           ChartData(
-            s.prsByOrg.values.headOption.getOrElse(Seq.empty).toSeq.map(_.label),
+            s.prsByOrg.values.headOption.map(_.keys.toSeq.sorted).getOrElse(Seq.empty),
             s.prsByOrg.map { case (org, prs) =>
               ChartDataset(
-                prs.map(_.value).toSeq,
+                prs.toList.sortBy(_._1).map(_._2),
                 s"PRs opened in $org",
                 "#D83F87",
                 "rgba(216, 63, 135, 0.5)",

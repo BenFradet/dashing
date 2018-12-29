@@ -23,7 +23,7 @@ object HeroRepoDashboard {
 
     def updateStars = Callback.future {
       Api.fetchHeroRepoStars
-        .map(r => $.setState(RepoState(r.name, r.starsTimeline.toList, r.stars)))
+        .map(r => $.setState(RepoState(r.name, r.starsTimeline.toMap, r.stars)))
     }
 
     def render(s: RepoState) = {
@@ -33,8 +33,14 @@ object HeroRepoDashboard {
           s"${s.name} stars: ${s.stars}",
           Chart.LineChart,
           ChartData(
-            s.starsTimeline.map(_.label),
-            Seq(ChartDataset(s.starsTimeline.map(_.value), s"${s.name}", "#0E0B16"))
+            s.starsTimeline.keys.toSeq.sorted,
+            Seq(
+              ChartDataset(
+                s.starsTimeline.toList.sortBy(_._1).map(_._2),
+                s"${s.name}",
+                "#0E0B16"
+              )
+            )
           )
         ))
       )
