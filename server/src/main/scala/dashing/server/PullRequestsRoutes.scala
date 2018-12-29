@@ -9,13 +9,12 @@ import github4s.GithubResponses._
 import github4s.free.domain._
 import github4s.cats.effect.jvm.Implicits._
 import io.chrisdavenport.mules.Cache
-import io.circe.generic.auto._
 import io.circe.syntax._
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import scalaj.http.HttpResponse
 
-import model.{GHObject, Timeline}
+import model.GHObject
 
 class PullRequestsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
   import PullRequestsRoutes._
@@ -46,13 +45,16 @@ object PullRequestsRoutes {
   def getPRsForOrgs[F[_]: Sync](
     gh: Github,
     orgs: List[String],
-    byOrg: (Github, String) => EitherT[F, GHException, Timeline]
-  ): EitherT[F, GHException, Map[String, Timeline]] =
+    byOrg: (Github, String) => EitherT[F, GHException, Map[String, Double]]
+  ): EitherT[F, GHException, Map[String, Map[String, Double]]] =
     orgs.map(o => (EitherT.rightT[F, GHException](o), byOrg(gh, o)).tupled)
       .sequence
       .map(_.toMap)
 
-  def getMonthlyPRs[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, Timeline] = for {
+  def getMonthlyPRs[F[_]: Sync](
+    gh: Github,
+    org: String
+  ): EitherT[F, GHException, Map[String, Double]] = for {
     prs <- getPRs(gh, org)
     monthlyPRs = utils.computeMonthlyTimeline(prs.map(_.created.take(7)))
   } yield monthlyPRs
@@ -60,7 +62,7 @@ object PullRequestsRoutes {
   def getQuarterlyPRs[F[_]: Sync](
     gh: Github,
     org: String
-  ): EitherT[F, GHException, Timeline] =
+  ): EitherT[F, GHException, Map[String, Double]] =
     for {
       prs <- getPRs(gh, org)
       quarterlyPRs = utils.computeQuarterlyTimeline(prs.map(_.created.take(7)))

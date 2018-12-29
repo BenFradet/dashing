@@ -34,7 +34,7 @@ object utils {
       members = ms.map(_.login)
     } yield members
 
-  def computeCumulativeMonthlyTimeline(timeline: List[String]): (Timeline, Int) = (for {
+  def computeCumulativeMonthlyTimeline(timeline: List[String]): (Map[String, Double], Int) = (for {
     min <- timeline.minimumOption
     max <- timeline.maximumOption
     minMonth <- Try(YearMonth.parse(min)).toOption
@@ -42,10 +42,10 @@ object utils {
     successiveMonths = getSuccessiveMonths(minMonth, maxMonth).map(_.toString)
     counts = cumulativeCount(timeline)
     filledTL = fillCumulativeTimeline(successiveMonths, counts)
-    dataPoints = filledTL._1.map(t => DataPoint(t._1, t._2.toDouble))
-  } yield (dataPoints, filledTL._2)).getOrElse((List.empty, 0))
+    dataPoints = filledTL._1.map(t => t._1 -> t._2.toDouble).toMap
+  } yield (dataPoints, filledTL._2)).getOrElse((Map.empty, 0))
 
-  def computeMonthlyTimeline(timeline: List[String]): Timeline = (for {
+  def computeMonthlyTimeline(timeline: List[String]): Map[String, Double] = (for {
     min <- timeline.minimumOption
     max <- timeline.maximumOption
     minMonth <- Try(YearMonth.parse(min)).toOption
@@ -55,10 +55,10 @@ object utils {
       .map(ym => Try(YearMonth.parse(ym)).toOption)
       .sequence
     counts = count(yearMonths)
-    filledTL = successiveMonths.map(e => DataPoint(e.toString, counts.getOrElse(e, 0).toDouble))
-  } yield filledTL).getOrElse(List.empty)
+    filledTL = successiveMonths.map(e => e.toString -> counts.getOrElse(e, 0).toDouble).toMap
+  } yield filledTL).getOrElse(Map.empty)
 
-  def computeQuarterlyTimeline(timeline: List[String]): Timeline = (for {
+  def computeQuarterlyTimeline(timeline: List[String]): Map[String, Double] = (for {
     min <- timeline.minimumOption
     max <- timeline.maximumOption
     minMonth <- Try(YearMonth.parse(min)).toOption
@@ -69,8 +69,8 @@ object utils {
       .sequence
     quarters = yearMonths.map(getQuarter)
     counts = count(quarters)
-    filledTL = successiveQuarters.map(e => DataPoint(e.toString, counts.getOrElse(e, 0).toDouble))
-  } yield filledTL).getOrElse(List.empty)
+    filledTL = successiveQuarters.map(e => e.toString -> counts.getOrElse(e, 0).toDouble).toMap
+  } yield filledTL).getOrElse(Map.empty)
 
   def getSuccessiveQuarters(ym1: YearMonth, ym2: YearMonth): List[Quarter] =
     getSuccessiveMonths(ym1, ym2).map(getQuarter).distinct

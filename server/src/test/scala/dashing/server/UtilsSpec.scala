@@ -35,45 +35,45 @@ class UtilsSpec extends Specification with Http4sMatchers[IO] with IOMatchers {
 
   "utils.computeQuarterlyTimeline" should {
     "compute a quarterly count" in {
-      utils.computeQuarterlyTimeline(List("2018-01", "2018-12")) must_== List(
-        DataPoint("Q1 2018", 1d),
-        DataPoint("Q2 2018", 0d),
-        DataPoint("Q3 2018", 0d),
-        DataPoint("Q4 2018", 1d)
+      utils.computeQuarterlyTimeline(List("2018-01", "2018-12")) must_== Map(
+        "Q1 2018" -> 1d,
+        "Q2 2018" -> 0d,
+        "Q3 2018" -> 0d,
+        "Q4 2018" -> 1d
       )
     }
-    "return an empty list if the timeline doesn't contain YYYY-MM" in {
-      utils.computeQuarterlyTimeline(List("test", "test2")) must_== Nil
+    "return an empty map if the timeline doesn't contain YYYY-MM" in {
+      utils.computeQuarterlyTimeline(List("test", "test2")) must_== Map.empty
     }
   }
 
   "utils.computeMonthlyTimeline" should {
     "compute a monthly count" in {
-      utils.computeMonthlyTimeline(List("2018-01", "2018-05")) must_== List(
-        DataPoint("2018-01", 1d),
-        DataPoint("2018-02", 0d),
-        DataPoint("2018-03", 0d),
-        DataPoint("2018-04", 0d),
-        DataPoint("2018-05", 1d)
+      utils.computeMonthlyTimeline(List("2018-01", "2018-05")) must_== Map(
+        "2018-01" -> 1d,
+        "2018-02" -> 0d,
+        "2018-03" -> 0d,
+        "2018-04" -> 0d,
+        "2018-05" -> 1d
       )
     }
-    "return an empty list if the timeline doesn't contain YYYY-MM" in {
-      utils.computeMonthlyTimeline(List("test", "test2")) must_== Nil
+    "return an empty map if the timeline doesn't contain YYYY-MM" in {
+      utils.computeMonthlyTimeline(List("test", "test2")) must_== Map.empty
     }
   }
 
   "utils.computeCumulativeMonthlyTimeline" should {
     "compute a monthly cumulative count" in {
-      utils.computeCumulativeMonthlyTimeline(List("2018-01", "2018-05")) must_== List(
-        DataPoint("2018-01", 1d),
-        DataPoint("2018-02", 1d),
-        DataPoint("2018-03", 1d),
-        DataPoint("2018-04", 1d),
-        DataPoint("2018-05", 2d)
+      utils.computeCumulativeMonthlyTimeline(List("2018-01", "2018-05")) must_== Map(
+        "2018-01" -> 1d,
+        "2018-02" -> 1d,
+        "2018-03" -> 1d,
+        "2018-04" -> 1d,
+        "2018-05" -> 2d
       ) -> 2
     }
-    "return an empty list if the timeline doesn't contain YYYY-MM" in {
-      utils.computeCumulativeMonthlyTimeline(List("test", "test2")) must_== Nil -> 0d
+    "return an empty map if the timeline doesn't contain YYYY-MM" in {
+      utils.computeCumulativeMonthlyTimeline(List("test", "test2")) must_== Map.empty -> 0d
     }
   }
 

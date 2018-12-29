@@ -65,7 +65,7 @@ object StarsRoutes {
     othersCombined = Monoid.combineAll(sorted.drop(n))
     others = othersCombined.copy(
       name = "others",
-      starsTimeline = othersCombined.starsTimeline.sortBy(_.label).dropRight(1)
+      starsTimeline = othersCombined.starsTimeline.toList.sortBy(_._1).dropRight(1).toMap
     )
   } yield Repos(others :: topN)
 
