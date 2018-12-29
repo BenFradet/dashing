@@ -90,7 +90,7 @@ object Chart {
   }
 
   val chart = ScalaComponent.builder[ChartProps]("Chart")
-    .render_P { p =>
+    .render_P { _ =>
       <.canvas(VdomAttr("width") := "100%", VdomAttr("height") := "60%")
     }
     .componentDidMount { scope =>

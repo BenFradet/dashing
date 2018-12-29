@@ -1,8 +1,6 @@
 package dashing
 package server
 
-import scala.concurrent.ExecutionContext
-
 import cats.Monoid
 import cats.data.EitherT
 import cats.effect.{Effect, Sync, Timer}
@@ -30,7 +28,7 @@ class StarsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
     org: String,
     heroRepo: String,
     topN: Int
-  )(implicit ec: ExecutionContext): HttpRoutes[F] = {
+  ): HttpRoutes[F] = {
     val gh = Github(Some(token))
     HttpRoutes.of[F] {
       case GET -> Root / "stars" / "top-n" => for {

@@ -97,6 +97,7 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     val router = Router(BaseUrl.fromWindowOrigin_/, routerConfig.logToConsole)
-    router().renderIntoDOM(dom.document.body)
+    val _ = router().renderIntoDOM(dom.document.body)
+    ()
   }
 }

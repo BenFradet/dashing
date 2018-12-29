@@ -1,7 +1,5 @@
 package dashing.server
 
-import scala.concurrent.ExecutionContext
-
 import cats.data.EitherT
 import cats.effect.{Effect, Sync, Timer}
 import cats.implicits._
@@ -26,7 +24,7 @@ class PullRequestsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
     cache: Cache[F, String, String],
     token: String,
     orgs: List[String]
-  )(implicit ec: ExecutionContext): HttpRoutes[F] =
+  ): HttpRoutes[F] =
     HttpRoutes.of[F] {
       case GET -> Root / "prs-quarterly" => for {
         prs <- utils.lookupOrInsert(cache)("prs-quarterly",
@@ -49,9 +47,10 @@ object PullRequestsRoutes {
     gh: Github,
     orgs: List[String],
     byOrg: (Github, String) => EitherT[F, GHException, Timeline]
-  ): EitherT[F, GHException, List[(String, Timeline)]] =
+  ): EitherT[F, GHException, Map[String, Timeline]] =
     orgs.map(o => (EitherT.rightT[F, GHException](o), byOrg(gh, o)).tupled)
       .sequence
+      .map(_.toMap)
 
   def getMonthlyPRs[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, Timeline] = for {
     prs <- getPRs(gh, org)
