@@ -14,36 +14,36 @@ object MonthlyPRsDashboard {
   final case class Props(router: RouterCtl[Dashboard])
 
   private val component = ScalaComponent.builder[Props]("Monthly pull requests dashboard")
-    .initialState(GHObjectState.empty)
+    .initialState(PRsState.empty)
     .renderBackend[DashboardBackend]
     .componentDidMount(s => s.backend.updatePRs)
     .build
 
-  final class DashboardBackend($: BackendScope[Props, GHObjectState]) {
+  final class DashboardBackend($: BackendScope[Props, PRsState]) {
 
     def updatePRs = Callback.future {
       Api.fetchMonthlyPRs.map { t =>
-        $.setState(GHObjectState(t.toList))
+        $.setState(PRsState(t))
       }
     }
 
-    def render(s: GHObjectState) = {
+    def render(s: PRsState) = {
       <.div(^.cls := "container",
         <.h2("Monthly pull requests dashboard"),
         Chart(Chart.ChartProps(
-          s"Number of pull requests opened by non-members per month",
+          s"Number of pull requests opened by non-members per month per organization",
           Chart.BarChart,
           ChartData(
-            s.nonMembers.map(_.label).toSeq,
-            Seq(
+            s.prsByOrg.values.headOption.getOrElse(Seq.empty).toSeq.map(_.label),
+            s.prsByOrg.map { case (org, prs) =>
               ChartDataset(
-                s.nonMembers.map(_.value).toSeq,
-                "pull requests opened",
+                prs.map(_.value).toSeq,
+                s"PRs opened in $org",
                 "#D83F87",
                 "rgba(216, 63, 135, 0.5)",
                 1
               )
-            )
+            }.toSeq
           )
         ))
       )

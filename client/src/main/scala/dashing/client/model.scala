@@ -28,8 +28,8 @@ object model {
     def empty = RepoState("", List.empty, 0)
   }
 
-  final case class GHObjectState(nonMembers: List[DataPoint])
-  object GHObjectState {
-    def empty = GHObjectState(List.empty)
+  final case class PRsState(prsByOrg: Map[String, List[DataPoint]])
+  object PRsState {
+    def empty = PRsState(Map.empty)
   }
 }
