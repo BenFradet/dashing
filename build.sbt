@@ -1,21 +1,6 @@
 organization in ThisBuild := "com.github.benfradet"
 
-lazy val compilerOptions = Seq(
-  "-deprecation",
-  "-encoding", "UTF-8",
-  "-feature",
-  "-language:existentials",
-  "-language:higherKinds",
-  "-unchecked",
-  "-Yno-adapted-args",
-  "-Ywarn-dead-code",
-  "-Ywarn-numeric-widen",
-  "-Ywarn-unused-import",
-  "-Xfuture"
-)
-
 lazy val baseSettings = Seq(
-  scalacOptions ++= compilerOptions,
   scalacOptions in (Compile, console) ~= {
     _.filterNot(Set("-Ywarn-unused-import"))
   },
