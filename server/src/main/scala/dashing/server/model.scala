@@ -12,6 +12,7 @@ object model {
     orgs: List[String],
     heroRepo: String,
     topNRepos: Int,
+    lookback: FiniteDuration,
     cacheDuration: FiniteDuration,
     host: String,
     port: Int

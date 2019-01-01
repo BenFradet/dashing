@@ -15,6 +15,7 @@ import io.chrisdavenport.mules.Cache
 import org.http4s.Uri
 import scalaj.http.HttpResponse
 
+import scala.concurrent.duration.FiniteDuration
 import scala.util.Try
 
 import model._
@@ -45,25 +46,28 @@ object utils {
     dataPoints = filledTL._1.map(t => t._1 -> t._2.toDouble).toMap
   } yield (dataPoints, filledTL._2)).getOrElse((Map.empty, 0))
 
-  def computeMonthlyTimeline(timeline: List[String]): Map[String, Double] = (for {
-    min <- timeline.minimumOption
-    max <- timeline.maximumOption
-    minMonth <- Try(YearMonth.parse(min)).toOption
-    maxMonth <- Try(YearMonth.parse(max)).toOption
-    successiveMonths = getSuccessiveMonths(minMonth, maxMonth)
+  def computeMonthlyTimeline(
+    timeline: List[String],
+    lookback: FiniteDuration
+  ): Map[String, Double] = (for {
+    nowYearMonth <- YearMonth.now.some
+    lookbackYearMonth = YearMonth.now.minusMonths(lookback.toDays / 30)
+    successiveMonths = getSuccessiveMonths(lookbackYearMonth, nowYearMonth)
     yearMonths <- timeline
       .map(ym => Try(YearMonth.parse(ym)).toOption)
       .sequence
+    yearMonthsFiltered = yearMonths.filter(_.compareTo(lookbackYearMonth) >= 0)
     counts = count(yearMonths)
     filledTL = successiveMonths.map(e => e.toString -> counts.getOrElse(e, 0).toDouble).toMap
   } yield filledTL).getOrElse(Map.empty)
 
-  def computeQuarterlyTimeline(timeline: List[String]): Map[String, Double] = (for {
-    min <- timeline.minimumOption
-    max <- timeline.maximumOption
-    minMonth <- Try(YearMonth.parse(min)).toOption
-    maxMonth <- Try(YearMonth.parse(max)).toOption
-    successiveQuarters = getSuccessiveQuarters(minMonth, maxMonth)
+  def computeQuarterlyTimeline(
+    timeline: List[String],
+    lookback: FiniteDuration
+  ): Map[String, Double] = (for {
+    nowYearMonth <- YearMonth.now.some
+    lookbackYearMonth = YearMonth.now.minusMonths(lookback.toDays / 30)
+    successiveQuarters = getSuccessiveQuarters(lookbackYearMonth, nowYearMonth)
     yearMonths <- timeline
       .map(ym => Try(YearMonth.parse(ym)).toOption)
       .sequence

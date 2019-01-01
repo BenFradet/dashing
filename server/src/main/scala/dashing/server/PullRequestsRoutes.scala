@@ -1,5 +1,7 @@
 package dashing.server
 
+import scala.concurrent.duration._
+
 import cats.data.EitherT
 import cats.effect.{Effect, Sync, Timer}
 import cats.implicits._
@@ -22,18 +24,19 @@ class PullRequestsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
   def routes(
     cache: Cache[F, String, String],
     token: String,
-    orgs: List[String]
+    orgs: List[String],
+    lookback: FiniteDuration
   ): HttpRoutes[F] =
     HttpRoutes.of[F] {
       case GET -> Root / "prs-quarterly" => for {
         prs <- utils.lookupOrInsert(cache)("prs-quarterly",
-          getPRsForOrgs(Github(Some(token)), orgs, getQuarterlyPRs(_, _))
+          getPRsForOrgs(Github(Some(token)), orgs, getQuarterlyPRs(_, _, lookback))
             .value.map(_.map(_.asJson.noSpaces)))
         res <- prs.fold(ex => NotFound(ex.getMessage), t => Ok(t))
       } yield res
       case GET -> Root / "prs-monthly" => for {
         prs <- utils.lookupOrInsert(cache)("prs-monthly",
-          getPRsForOrgs(Github(Some(token)), orgs, getMonthlyPRs(_, _))
+          getPRsForOrgs(Github(Some(token)), orgs, getMonthlyPRs(_, _, lookback))
             .value.map(_.map(_.asJson.noSpaces)))
         res <- prs.fold(ex => NotFound(ex.getMessage), t => Ok(t))
       } yield res
@@ -53,19 +56,21 @@ object PullRequestsRoutes {
 
   def getMonthlyPRs[F[_]: Sync](
     gh: Github,
-    org: String
+    org: String,
+    lookback: FiniteDuration
   ): EitherT[F, GHException, Map[String, Double]] = for {
     prs <- getPRs(gh, org)
-    monthlyPRs = utils.computeMonthlyTimeline(prs.map(_.created.take(7)))
+    monthlyPRs = utils.computeMonthlyTimeline(prs.map(_.created.take(7)), lookback)
   } yield monthlyPRs
 
   def getQuarterlyPRs[F[_]: Sync](
     gh: Github,
-    org: String
+    org: String,
+    lookback: FiniteDuration
   ): EitherT[F, GHException, Map[String, Double]] =
     for {
       prs <- getPRs(gh, org)
-      quarterlyPRs = utils.computeQuarterlyTimeline(prs.map(_.created.take(7)))
+      quarterlyPRs = utils.computeQuarterlyTimeline(prs.map(_.created.take(7)), lookback)
     } yield quarterlyPRs
 
   def getPRs[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, List[GHObject]] = for {

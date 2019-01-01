@@ -19,7 +19,7 @@ class PullRequestsRoutesSpec extends Specification with IOMatchers {
   def serve(req: Request[IO]): Response[IO] = (for {
     cache <- Cache.createCache[IO, String, String](TimeSpec.fromDuration(12.hours))
     service <- new PullRequestsRoutes[IO]()
-      .routes(cache, sys.env.getOrElse("GITHUB4S_ACCESS_TOKEN", ""), List("igwp"))
+      .routes(cache, sys.env.getOrElse("GITHUB4S_ACCESS_TOKEN", ""), List("igwp"), 365.days)
       .orNotFound(req)
   } yield service).unsafeRunSync
 

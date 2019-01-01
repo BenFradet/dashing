@@ -2,6 +2,8 @@ package dashing.server
 
 import java.time.YearMonth
 
+import scala.concurrent.duration._
+
 import cats.effect.IO
 import github4s.Github
 import org.http4s.testing.{Http4sMatchers, IOMatchers}
@@ -35,30 +37,46 @@ class UtilsSpec extends Specification with Http4sMatchers[IO] with IOMatchers {
 
   "utils.computeQuarterlyTimeline" should {
     "compute a quarterly count" in {
-      utils.computeQuarterlyTimeline(List("2018-01", "2018-12")) must_== Map(
-        "Q1 2018" -> 1d,
-        "Q2 2018" -> 0d,
-        "Q3 2018" -> 0d,
-        "Q4 2018" -> 1d
+      utils.computeQuarterlyTimeline(List("2018-01", "2018-12"), 365.days) must_== Map(
+        "2018 Q1" -> 1d,
+        "2018 Q2" -> 0d,
+        "2018 Q3" -> 0d,
+        "2018 Q4" -> 1d,
+        "2019 Q1" -> 0d,
       )
     }
+    "cutoff based on the lookback" in {
+      utils.computeQuarterlyTimeline(List("2018-01", "2018-05"), 1.day) must_==
+        Map("2019 Q1" -> 0d)
+    }
     "return an empty map if the timeline doesn't contain YYYY-MM" in {
-      utils.computeQuarterlyTimeline(List("test", "test2")) must_== Map.empty
+      utils.computeQuarterlyTimeline(List("test", "test2"), 365.days) must_== Map.empty
     }
   }
 
   "utils.computeMonthlyTimeline" should {
     "compute a monthly count" in {
-      utils.computeMonthlyTimeline(List("2018-01", "2018-05")) must_== Map(
+      utils.computeMonthlyTimeline(List("2018-01", "2018-05"), 365.days) must_== Map(
         "2018-01" -> 1d,
         "2018-02" -> 0d,
         "2018-03" -> 0d,
         "2018-04" -> 0d,
-        "2018-05" -> 1d
+        "2018-05" -> 1d,
+        "2018-06" -> 0d,
+        "2018-07" -> 0d,
+        "2018-08" -> 0d,
+        "2018-09" -> 0d,
+        "2018-10" -> 0d,
+        "2018-11" -> 0d,
+        "2018-12" -> 0d,
+        "2019-01" -> 0d,
       )
     }
+    "cutoff based on the lookback" in {
+      utils.computeMonthlyTimeline(List("2018-01", "2018-05"), 1.day) must_== Map("2019-01" -> 0d)
+    }
     "return an empty map if the timeline doesn't contain YYYY-MM" in {
-      utils.computeMonthlyTimeline(List("test", "test2")) must_== Map.empty
+      utils.computeMonthlyTimeline(List("test", "test2"), 365.days) must_== Map.empty
     }
   }
 
