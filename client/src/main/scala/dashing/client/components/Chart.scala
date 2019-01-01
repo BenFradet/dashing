@@ -51,9 +51,13 @@ trait ChartOptions extends js.Object {
   def responsive: Boolean = js.native
 }
 object ChartOptions {
-  def apply(title: String, responsive: Boolean): ChartOptions = {
+  def apply(title: String, responsive: Boolean, stacked: Boolean): ChartOptions = {
     val t = js.Dynamic.literal(display = true, text = title)
-    js.Dynamic.literal(responsive = responsive, title = t).asInstanceOf[ChartOptions]
+    val s = js.Dynamic.literal(
+      xAxes = js.Array(js.Dynamic.literal(stacked = stacked)),
+      yAxes = js.Array(js.Dynamic.literal(stacked = stacked))
+    )
+    js.Dynamic.literal(responsive = responsive, title = t, scales = s).asInstanceOf[ChartOptions]
   }
 }
 
@@ -82,9 +86,11 @@ object Chart {
   def draw(ctx: js.Dynamic, props: ChartProps): Callback = Callback {
     props.style match {
       case LineChart =>
-        new JSChart(ctx, ChartConfiguration("line", props.data, ChartOptions(props.name, true)))
+        new JSChart(ctx,
+          ChartConfiguration("line", props.data, ChartOptions(props.name, true, false)))
       case BarChart =>
-        new JSChart(ctx, ChartConfiguration("bar", props.data, ChartOptions(props.name, true)))
+        new JSChart(ctx,
+          ChartConfiguration("bar", props.data, ChartOptions(props.name, true, true)))
       case _ => throw new IllegalArgumentException
     }
   }
