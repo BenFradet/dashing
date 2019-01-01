@@ -19,6 +19,14 @@ object QuarterlyPRsDashboard {
     .componentDidMount(s => s.backend.updatePRs)
     .build
 
+  private val colors = List(
+    "rgba(216, 63, 135, 1.0)",
+    "rgba(42, 27, 61, 1.0)",
+    "rgba(68, 49, 141, 1.0)",
+    "rgba(130, 100, 167, 1.0)",
+    "rgba(164, 179, 182, 1.0)",
+  )
+
   final class DashboardBackend($: BackendScope[Props, PRsState]) {
 
     def updatePRs = Callback.future {
@@ -35,15 +43,17 @@ object QuarterlyPRsDashboard {
           Chart.BarChart,
           ChartData(
             s.prsByOrg.values.headOption.map(_.keys.toSeq.sorted).getOrElse(Seq.empty),
-            s.prsByOrg.map { case (org, prs) =>
-              ChartDataset(
-                prs.toList.sortBy(_._1).map(_._2),
-                s"PRs opened in $org",
-                "#D83F87",
-                "rgba(216, 63, 135, 0.5)",
-                1
-              )
-            }.toSeq
+            s.prsByOrg
+              .zip(Stream.continually(colors).flatten)
+              .map { case ((org, prs), bgc) =>
+                ChartDataset(
+                  prs.toList.sortBy(_._1).map(_._2),
+                  org,
+                  "rgba(0, 0, 0, 0)",
+                  bgc,
+                  1
+                )
+              }.toSeq
           )
         ))
       )
