@@ -2,7 +2,7 @@ package dashing.server
 
 import scala.concurrent.duration.FiniteDuration
 
-import cats.Monoid
+import cats.{Eq, Monoid}
 import cats.instances.all._
 import cats.syntax.semigroup._
 
@@ -26,6 +26,7 @@ object model {
 
   final case class Repo(name: String, starsTimeline: Map[String, Double], stars: Int)
   object Repo {
+    implicit val repoEq: Eq[Repo] = Eq.fromUniversalEquals
     implicit val repoMonoid: Monoid[Repo] = new Monoid[Repo] {
       def combine(r1: Repo, r2: Repo): Repo = {
         val combined = r1.starsTimeline |+| r2.starsTimeline
