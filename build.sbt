@@ -78,6 +78,7 @@ lazy val scalatagsVersion = "0.6.7"
 lazy val mulesVersion = "0.2.0-M2"
 lazy val logbackVersion = "1.2.3"
 lazy val specs2Version = "4.3.6"
+lazy val catsVersion = "1.5.0"
 
 lazy val server = project.in(file("server"))
   .settings(baseSettings)
@@ -85,22 +86,25 @@ lazy val server = project.in(file("server"))
     name := "server",
     libraryDependencies ++= Seq(
       "org.http4s" %% "http4s-dsl",
-      "org.http4s" %% "http4s-blaze-server"
+      "org.http4s" %% "http4s-blaze-server",
     ).map(_ % http4sVersion) ++ Seq(
       "com.47deg" %% "github4s",
-      "com.47deg" %% "github4s-cats-effect"
+      "com.47deg" %% "github4s-cats-effect",
     ).map(_ % github4sVersion) ++ Seq(
       "io.circe" %% "circe-core",
-      "io.circe" %% "circe-generic"
+      "io.circe" %% "circe-generic",
     ).map(_ % circeVersion) ++ Seq(
       "com.lihaoyi" %% "scalatags" % scalatagsVersion,
       "io.circe" %% "circe-config" % circeConfigVersion,
       "io.chrisdavenport" %% "mules" % mulesVersion,
-      "ch.qos.logback" % "logback-classic" % logbackVersion
-    ) ++ Seq(
-      "org.specs2" %% "specs2-core" % specs2Version,
-      "org.http4s" %% "http4s-testing" % http4sVersion
-    ).map(_ % "test")
+      "ch.qos.logback" % "logback-classic" % logbackVersion,
+    ) ++ (Seq(
+      "org.specs2" %% "specs2-core",
+      "org.specs2" %% "specs2-scalacheck",
+    ).map(_ % specs2Version) ++ Seq(
+      "org.http4s" %% "http4s-testing" % http4sVersion,
+      "org.typelevel" %% "cats-laws" % catsVersion,
+    )).map(_ % "test")
   )
   .settings(
     // lets us access client-fastopt.js
