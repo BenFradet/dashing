@@ -7,15 +7,22 @@ import cats.instances.all._
 import cats.syntax.semigroup._
 
 object model {
-  final case class DashingConfig(
-    ghToken: String,
-    orgs: List[String],
+  final case class StarDashboardsConfig(
+    org: String,
     heroRepo: String,
     topNRepos: Int,
+  )
+  final case class PRDashboardsConfig(
+    orgs: List[String],
     lookback: FiniteDuration,
+  )
+  final case class DashingConfig(
+    ghToken: String,
+    prDashboards: PRDashboardsConfig,
+    starDashboards: StarDashboardsConfig,
     cacheDuration: FiniteDuration,
     host: String,
-    port: Int
+    port: Int,
   )
 
   final case class Quarter(year: Int, quarter: Int) {
