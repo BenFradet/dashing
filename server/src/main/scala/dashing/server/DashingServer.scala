@@ -34,8 +34,8 @@ object ServerStream {
           cache <- Stream.eval(
             Cache.createCache[F, String, String](TimeSpec.fromDuration(c.cacheDuration)))
           apiService =
-            new StarsRoutes[F].routes(cache, c.ghToken, c.orgs.head, c.heroRepo, c.topNRepos) <+>
-            new PullRequestsRoutes[F]().routes(cache, c.ghToken, c.orgs, c.lookback)
+            new StarsRoutes[F].routes(cache, c.ghToken, c.starDashboards) <+>
+            new PullRequestsRoutes[F]().routes(cache, c.ghToken, c.prDashboards)
           httpApp = Router(
             "/" -> new RenderingRoutes[F](ec).routes,
             "/api" -> apiService

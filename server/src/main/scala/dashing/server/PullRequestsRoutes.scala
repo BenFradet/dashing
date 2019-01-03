@@ -16,7 +16,7 @@ import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import scalaj.http.HttpResponse
 
-import model.GHObject
+import model.{GHObject, PRDashboardsConfig}
 
 class PullRequestsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
   import PullRequestsRoutes._
@@ -24,19 +24,18 @@ class PullRequestsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
   def routes(
     cache: Cache[F, String, String],
     token: String,
-    orgs: List[String],
-    lookback: FiniteDuration
+    config: PRDashboardsConfig,
   ): HttpRoutes[F] =
     HttpRoutes.of[F] {
       case GET -> Root / "prs-quarterly" => for {
         prs <- utils.lookupOrInsert(cache)("prs-quarterly",
-          getPRsForOrgs(Github(Some(token)), orgs, getQuarterlyPRs(_, _, lookback))
+          getPRsForOrgs(Github(Some(token)), config.orgs, getQuarterlyPRs(_, _, config.lookback))
             .value.map(_.map(_.asJson.noSpaces)))
         res <- prs.fold(ex => NotFound(ex.getMessage), t => Ok(t))
       } yield res
       case GET -> Root / "prs-monthly" => for {
         prs <- utils.lookupOrInsert(cache)("prs-monthly",
-          getPRsForOrgs(Github(Some(token)), orgs, getMonthlyPRs(_, _, lookback))
+          getPRsForOrgs(Github(Some(token)), config.orgs, getMonthlyPRs(_, _, config.lookback))
             .value.map(_.map(_.asJson.noSpaces)))
         res <- prs.fold(ex => NotFound(ex.getMessage), t => Ok(t))
       } yield res

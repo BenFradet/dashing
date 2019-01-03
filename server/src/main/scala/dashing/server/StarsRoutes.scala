@@ -17,7 +17,7 @@ import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import scalaj.http.HttpResponse
 
-import model.{Repo, Repos}
+import model.{StarDashboardsConfig, Repo, Repos}
 
 class StarsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
   import StarsRoutes._
@@ -25,20 +25,19 @@ class StarsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
   def routes(
     cache: Cache[F, String, String],
     token: String,
-    org: String,
-    heroRepo: String,
-    topN: Int
+    config: StarDashboardsConfig
   ): HttpRoutes[F] = {
     val gh = Github(Some(token))
     HttpRoutes.of[F] {
       case GET -> Root / "stars" / "top-n" => for {
         topN <- utils.lookupOrInsert(cache)("top-n",
-          getTopN(gh, org, topN, heroRepo).value.map(_.map(_.repos.asJson.noSpaces)))
+          getTopN(gh, config.org, config.topNRepos, config.heroRepo)
+            .value.map(_.map(_.repos.asJson.noSpaces)))
         res <- topN.fold(ex => NotFound(ex.getMessage), l => Ok(l))
       } yield res
       case GET -> Root / "stars" / "hero-repo" => for {
         stars <- utils.lookupOrInsert(cache)("hero-repo",
-          getStars(gh, org, heroRepo).value.map(_.map(_.asJson.noSpaces)))
+          getStars(gh, config.org, config.heroRepo).value.map(_.map(_.asJson.noSpaces)))
         res <- stars.fold(ex => NotFound(ex.getMessage), r => Ok(r))
       } yield res
     }
