@@ -11,6 +11,8 @@ import org.http4s.syntax.kleisli._
 import org.http4s.testing.IOMatchers
 import org.specs2.mutable.Specification
 
+import model.StarDashboardsConfig
+
 class StarsRoutesSpec extends Specification with IOMatchers {
   args(skipAll = sys.env.get("GITHUB4S_ACCESS_TOKEN").isEmpty)
 
@@ -19,7 +21,8 @@ class StarsRoutesSpec extends Specification with IOMatchers {
   def serve(req: Request[IO]): Response[IO] = (for {
     cache <- Cache.createCache[IO, String, String](TimeSpec.fromDuration(12.hours))
     service <- new StarsRoutes[IO]()
-      .routes(cache, sys.env.getOrElse("GITHUB4S_ACCESS_TOKEN", ""), "igwp", "igwp", 2)
+      .routes(cache, sys.env.getOrElse("GITHUB4S_ACCESS_TOKEN", ""),
+        StarDashboardsConfig("igwp", "igwp", 2))
       .orNotFound(req)
   } yield service).unsafeRunSync
 

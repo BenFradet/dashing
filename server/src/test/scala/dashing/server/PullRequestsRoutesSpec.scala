@@ -11,6 +11,8 @@ import org.http4s.syntax.kleisli._
 import org.http4s.testing.IOMatchers
 import org.specs2.mutable.Specification
 
+import model.PRDashboardsConfig
+
 class PullRequestsRoutesSpec extends Specification with IOMatchers {
   args(skipAll = sys.env.get("GITHUB4S_ACCESS_TOKEN").isEmpty)
 
@@ -19,7 +21,8 @@ class PullRequestsRoutesSpec extends Specification with IOMatchers {
   def serve(req: Request[IO]): Response[IO] = (for {
     cache <- Cache.createCache[IO, String, String](TimeSpec.fromDuration(12.hours))
     service <- new PullRequestsRoutes[IO]()
-      .routes(cache, sys.env.getOrElse("GITHUB4S_ACCESS_TOKEN", ""), List("igwp"), 365.days)
+      .routes(cache, sys.env.getOrElse("GITHUB4S_ACCESS_TOKEN", ""),
+        PRDashboardsConfig(List("igwp"), 365.days))
       .orNotFound(req)
   } yield service).unsafeRunSync
 
