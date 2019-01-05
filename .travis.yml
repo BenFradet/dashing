@@ -1,10 +1,10 @@
 language: scala
-
 scala:
   - 2.12.6
-
 jdk:
   - oraclejdk8
-
 script:
   - sbt ++$TRAVIS_SCALA_VERSION "project server" test
+env:
+  global:
+    secure: EYZqMKpHTyM3zKXZvSjVm3UsfLokMT6d8uc1jsgOcVf5OUk8x61R2rNLQtDemX/xG5jg9U9kqWd3JKtL9i3zHn8mIWgHk/zxdRN0PoZY0KotYgpJouGNTe+0J17uF0Wfx+RhdXSlqCZPQFKh6s1nhvRguwSAi3CE1W89/k5YPXOpnrTiCr6KD06cXyCDaOwlYKYbMFkV4XY6+2X0ibuIZxPMzsl5uB371ncxKcXEbAocTex/yn2OmOgo6i64Z5bYDw6oQvUFVI7mLXHjewgfxICbRWCxszAQWw+Y3j67BO6FdyVlZeIsO8ySKNYGmQSGt7WV9LtCvHqpvZ2zsfVtvJ7OBNLX7Om98K9dRm4H9CF4T1yYzKC61GqiVgH6nVWGiQWUSEQnlW9yFO/CLGJ/HUh6u9YmJUZ5zvA6euJyGrLKEFkDHgDUZag3hM1z4XjqfXxKNjEPEP9VSstNIPLIqP/5LWsdsKumjr2qUH/KyILaUSrpiSBTFSqmxjLZ0vbfZv/zkkdh9e/Hp9wpf+C7cfS4cmZfmtYRSI6tcvQCbBX+KdQClEgE9O+oZ78e8VwKe8qYBrbsuaBOTcqvKbZHwicvDoU28+UBv4td9F/8xPAGyIO48j/JS4uGp9MTl4NeH7dtS2TPzExgaQDgrbfZVtqtHsfINwpaw4iOH1BuGDE=
