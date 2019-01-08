@@ -16,7 +16,7 @@ class RepoLawSpec extends Specification with Discipline { def is = {
 object RepoLawSpec {
   implicit def arbFoo: Arbitrary[Repo] = Arbitrary(for {
     name <- Gen.alphaStr
-    timeline <- Gen.mapOf(Gen.zip(Gen.alphaStr, Gen.chooseNum(0d, 100d)))
+    timeline <- Gen.mapOf(Gen.zip(Gen.alphaStr, Gen.chooseNum(0, 100).map(_.toDouble)))
     stars <- Gen.chooseNum(1, 1000)
   } yield Repo(name, timeline, stars))
 }
