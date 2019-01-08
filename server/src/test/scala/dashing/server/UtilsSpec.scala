@@ -13,7 +13,7 @@ import model._
 
 class UtilsSpec extends Specification with Http4sMatchers[IO] with IOMatchers {
 
-  val gh = Github(sys.env.get("GITHUB4S_ACCESS_TOKEN"))
+  val gh = Github(sys.env.get("GITHUB_ACCESS_TOKEN"))
 
   "utils.getRepos" should {
     "retrieve the list of repos in an org" in {

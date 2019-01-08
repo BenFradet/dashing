@@ -14,14 +14,14 @@ import org.specs2.mutable.Specification
 import model.PRDashboardsConfig
 
 class PullRequestsRoutesSpec extends Specification with IOMatchers {
-  args(skipAll = sys.env.get("GITHUB4S_ACCESS_TOKEN").isEmpty)
+  args(skipAll = sys.env.get("GITHUB_ACCESS_TOKEN").isEmpty)
 
   implicit val timer = IO.timer(global)
 
   def serve(req: Request[IO]): Response[IO] = (for {
     cache <- Cache.createCache[IO, String, String](TimeSpec.fromDuration(12.hours))
     service <- new PullRequestsRoutes[IO]()
-      .routes(cache, sys.env.getOrElse("GITHUB4S_ACCESS_TOKEN", ""),
+      .routes(cache, sys.env.getOrElse("GITHUB_ACCESS_TOKEN", ""),
         PRDashboardsConfig(List("igwp"), 365.days))
       .orNotFound(req)
   } yield service).unsafeRunSync

@@ -14,14 +14,14 @@ import org.specs2.mutable.Specification
 import model.StarDashboardsConfig
 
 class StarsRoutesSpec extends Specification with IOMatchers {
-  args(skipAll = sys.env.get("GITHUB4S_ACCESS_TOKEN").isEmpty)
+  args(skipAll = sys.env.get("GITHUB_ACCESS_TOKEN").isEmpty)
 
   implicit val timer = IO.timer(global)
 
   def serve(req: Request[IO]): Response[IO] = (for {
     cache <- Cache.createCache[IO, String, String](TimeSpec.fromDuration(12.hours))
     service <- new StarsRoutes[IO]()
-      .routes(cache, sys.env.getOrElse("GITHUB4S_ACCESS_TOKEN", ""),
+      .routes(cache, sys.env.getOrElse("GITHUB_ACCESS_TOKEN", ""),
         StarDashboardsConfig("igwp", "igwp", 2))
       .orNotFound(req)
   } yield service).unsafeRunSync
