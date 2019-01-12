@@ -14,6 +14,7 @@ object model {
   )
   final case class PRDashboardsConfig(
     orgs: List[String],
+    peopleToIgnore: List[String],
     lookback: FiniteDuration,
   )
   final case class DashingConfig(

@@ -29,14 +29,16 @@ class PullRequestsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
     HttpRoutes.of[F] {
       case GET -> Root / "prs-quarterly" => for {
         prs <- utils.lookupOrInsert(cache)("prs-quarterly",
-          getPRsForOrgs(Github(Some(token)), config.orgs, getQuarterlyPRs(_, _, config.lookback))
-            .value.map(_.map(_.asJson.noSpaces)))
+          getPRsForOrgs(Github(Some(token)), config.orgs,
+            getQuarterlyPRs(_, _, config.lookback, config.peopleToIgnore.toSet))
+              .value.map(_.map(_.asJson.noSpaces)))
         res <- prs.fold(ex => NotFound(ex.getMessage), t => Ok(t))
       } yield res
       case GET -> Root / "prs-monthly" => for {
         prs <- utils.lookupOrInsert(cache)("prs-monthly",
-          getPRsForOrgs(Github(Some(token)), config.orgs, getMonthlyPRs(_, _, config.lookback))
-            .value.map(_.map(_.asJson.noSpaces)))
+          getPRsForOrgs(Github(Some(token)), config.orgs,
+            getMonthlyPRs(_, _, config.lookback, config.peopleToIgnore.toSet))
+              .value.map(_.map(_.asJson.noSpaces)))
         res <- prs.fold(ex => NotFound(ex.getMessage), t => Ok(t))
       } yield res
     }
@@ -56,28 +58,36 @@ object PullRequestsRoutes {
   def getMonthlyPRs[F[_]: Sync](
     gh: Github,
     org: String,
-    lookback: FiniteDuration
+    lookback: FiniteDuration,
+    peopleToIgnore: Set[String],
   ): EitherT[F, GHException, Map[String, Double]] = for {
-    prs <- getPRs(gh, org)
+    prs <- getPRs(gh, org, peopleToIgnore)
     monthlyPRs = utils.computeMonthlyTimeline(prs.map(_.created.take(7)), lookback)
   } yield monthlyPRs
 
   def getQuarterlyPRs[F[_]: Sync](
     gh: Github,
     org: String,
-    lookback: FiniteDuration
+    lookback: FiniteDuration,
+    peopleToIgnore: Set[String],
   ): EitherT[F, GHException, Map[String, Double]] =
     for {
-      prs <- getPRs(gh, org)
+      prs <- getPRs(gh, org, peopleToIgnore)
       quarterlyPRs = utils.computeQuarterlyTimeline(prs.map(_.created.take(7)), lookback)
     } yield quarterlyPRs
 
-  def getPRs[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, List[GHObject]] = for {
+  def getPRs[F[_]: Sync](
+    gh: Github,
+    org: String,
+    peopleToIgnore: Set[String],
+  ): EitherT[F, GHException, List[GHObject]] = for {
     repos <- utils.getRepos[F](gh, org)
     repoNames = repos.map(_.name)
     prs <- getPRs(gh, org, repoNames)
     members <- utils.getOrgMembers[F](gh, org)
-    prsByNonMember = prs.filterNot(pr => members.toSet.contains(pr.author))
+    prsByNonMember = prs.filterNot(pr =>
+      members.toSet.contains(pr.author) || peopleToIgnore.toSet.contains(pr.author))
+    _ = println(prsByNonMember)
   } yield prsByNonMember
 
   def getPRs[F[_]: Sync](
@@ -105,5 +115,6 @@ object PullRequestsRoutes {
     repoName: String,
     page: Option[Pagination]
   ): F[Either[GHException, GHResult[List[PullRequest]]]] =
-    gh.pullRequests.list(org, repoName, Nil, page).exec[F, HttpResponse[String]]()
+    gh.pullRequests.list(org, repoName, Nil, page)
+      .exec[F, HttpResponse[String]]()
 }
