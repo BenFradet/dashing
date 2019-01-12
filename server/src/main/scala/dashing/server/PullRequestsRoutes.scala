@@ -87,7 +87,6 @@ object PullRequestsRoutes {
     members <- utils.getOrgMembers[F](gh, org)
     prsByNonMember = prs.filterNot(pr =>
       members.toSet.contains(pr.author) || peopleToIgnore.toSet.contains(pr.author))
-    _ = println(prsByNonMember)
   } yield prsByNonMember
 
   def getPRs[F[_]: Sync](
