@@ -43,7 +43,8 @@ object ServerStream {
           server <- BlazeServerBuilder[F]
             .bindHttp(c.port, c.host)
             .withHttpApp(httpApp)
-            .withIdleTimeout(1.minute)
+            .withResponseHeaderTimeout(10.minute)
+            .withIdleTimeout(10.minute)
             .serve
         } yield server
       case Left(e) => Stream.eval(ConcurrentEffect[F].delay {
