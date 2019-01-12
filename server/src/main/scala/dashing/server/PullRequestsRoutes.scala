@@ -115,6 +115,6 @@ object PullRequestsRoutes {
     repoName: String,
     page: Option[Pagination]
   ): F[Either[GHException, GHResult[List[PullRequest]]]] =
-    gh.pullRequests.list(org, repoName, Nil, page)
+    gh.pullRequests.list(org, repoName, List(PRFilterAll), page)
       .exec[F, HttpResponse[String]]()
 }
