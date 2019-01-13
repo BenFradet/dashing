@@ -70,7 +70,7 @@ dockerExposedPorts := Seq(8080)
 dockerExposedVolumes := Seq("/dashing/config")
 maintainer in Docker := "Ben Fradet <https://github.com/BenFradet>"
 
-lazy val http4sVersion = "0.20.0-M4"
+lazy val http4sVersion = "0.20.0-M5"
 lazy val github4sVersion = "0.20.0"
 lazy val circeVersion = "0.11.0"
 lazy val circeConfigVersion = "0.6.0"
