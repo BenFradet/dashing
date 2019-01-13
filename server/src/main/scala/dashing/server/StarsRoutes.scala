@@ -14,6 +14,7 @@ import io.chrisdavenport.mules.Cache
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.http4s.HttpRoutes
+import org.http4s.client.Client
 import org.http4s.dsl.Http4sDsl
 import scalaj.http.HttpResponse
 
@@ -23,6 +24,7 @@ class StarsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
   import StarsRoutes._
 
   def routes(
+    client: Client[F],
     cache: Cache[F, String, String],
     token: String,
     config: StarDashboardsConfig

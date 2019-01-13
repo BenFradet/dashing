@@ -10,6 +10,7 @@ import fs2.Stream
 import io.chrisdavenport.mules.{Cache, TimeSpec}
 import io.circe.generic.auto._
 import io.circe.config.syntax._
+import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.server.Router
 import org.http4s.server.blaze._
 import org.http4s.syntax.kleisli._
@@ -33,9 +34,10 @@ object ServerStream {
         for {
           cache <- Stream.eval(
             Cache.createCache[F, String, String](TimeSpec.fromDuration(c.cacheDuration)))
+          client <- BlazeClientBuilder[F](ec).stream
           apiService =
-            new StarsRoutes[F].routes(cache, c.ghToken, c.starDashboards) <+>
-            new PullRequestsRoutes[F]().routes(cache, c.ghToken, c.prDashboards)
+            new StarsRoutes[F].routes(client, cache, c.ghToken, c.starDashboards) <+>
+            new PullRequestsRoutes[F]().routes(client, cache, c.ghToken, c.prDashboards)
           httpApp = Router(
             "/" -> new RenderingRoutes[F](ec).routes,
             "/api" -> apiService
