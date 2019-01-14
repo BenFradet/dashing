@@ -16,7 +16,14 @@ import org.http4s.client.Client
 class GraphQL[F[_]: Sync](client: Client[F]) extends Http4sClientDsl[F] {
   import GraphQL._
 
-  def getPRs(owner: String, name: String)(pagination: Pagination): F[PullRequestsInfo] = {
+  def getPRs(owner: String, name: String): F[List[AuthorAndTimestamp]] = for {
+    prs <- autoPaginate((p: Pagination) => getPRsWithPagination(owner, name)(p))
+    list = prs.foldLeft(List.empty[AuthorAndTimestamp])((acc, e) => acc ++ e.pullRequests)
+  } yield list
+
+  def getPRsWithPagination(
+    owner: String, name: String
+  )(pagination: Pagination): F[PullRequestsInfo] = {
     val cursor = pagination.cursor.map("after:" + _).getOrElse("")
     val query =
       s"""query {repository(owner:"$owner",name:"$name"){pullRequests(states:[OPEN,CLOSED,MERGED]first:${pagination.size} $cursor){edges{node{author{login}createdAt}}pageInfo{endCursor hasNextPage}}}}"""
