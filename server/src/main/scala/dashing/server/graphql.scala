@@ -5,10 +5,25 @@ import cats.syntax.functor._
 import cats.syntax.option._
 import cats.effect.Sync
 import fs2.{Chunk, Pull}
+import io.circe.Decoder
+import org.http4s.Uri
+import org.http4s.circe.CirceEntityCodec._
+import org.http4s.client.Client
 
 object graphql {
-  def getPRs(owner: String, name: String): String =
-    s"""query {repository(owner:\"$owner\",name:\"$name\"){pullRequests(states:[OPEN,CLOSED,MERGED]first:100){edges{node{author{login}createdAt}}pageInfo{endCursor hasNextPage}}}}"""
+  val ghEndpoint = Uri.uri("https://api.github.com/graphql")
+
+  def getPRs[F[_]](
+    client: Client[F],
+    owner: String,
+    name: String
+  )(pagination: Pagination): String = {
+    val cursor = pagination.cursor.map("after:" + _).getOrElse("")
+    val query =
+      s"""query {repository(owner:\"$owner\",name:\"$name\"){pullRequests(states:[OPEN,CLOSED,MERGED]first:${pagination.size} $cursor){edges{node{author{login}createdAt}}pageInfo{endCursor hasNextPage}}}}"""
+    query
+    //client.expect[String](ghEndpoint)
+  }
 
   def autoPaginate[F[_]: Sync, T <: PageInfo](call: Pagination => F[T]): F[List[T]] = for {
     first <- call(Pagination(100, None))
@@ -36,6 +51,19 @@ object graphql {
     }
 
   final case class Pagination(size: Int, cursor: Option[String])
+
+  final case class AuthorAndTimestamp(
+    author: String,
+    timestamp: String
+  )
+  object AuthorAndTimestamp {
+    implicit val decoder: Decoder[AuthorAndTimestamp] = Decoder.instance { c =>
+      for {
+        author <- c.downField("node").downField("author").get[String]("login")
+        timestamp <- c.downField("node").get[String]("createdAt")
+      } yield AuthorAndTimestamp(author, timestamp)
+    }
+  }
 
   sealed trait PageInfo {
     def endCursor: String

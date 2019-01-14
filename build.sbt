@@ -88,6 +88,7 @@ lazy val server = project.in(file("server"))
       "org.http4s" %% "http4s-dsl",
       "org.http4s" %% "http4s-blaze-server",
       "org.http4s" %% "http4s-blaze-client",
+      "org.http4s" %% "http4s-circe",
     ).map(_ % http4sVersion) ++ Seq(
       "com.47deg" %% "github4s",
       "com.47deg" %% "github4s-cats-effect",
