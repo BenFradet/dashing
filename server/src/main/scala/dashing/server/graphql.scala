@@ -69,4 +69,23 @@ object graphql {
     def endCursor: String
     def hasNextPage: Boolean
   }
+  final case class PullRequestsInfo(
+    pullRequests: List[AuthorAndTimestamp],
+    endCursor: String,
+    hasNextPage: Boolean
+  ) extends PageInfo
+  object PullRequestsInfo {
+    implicit val decoder: Decoder[PullRequestsInfo] = Decoder.instance { c =>
+      val downCursor = c
+        .downField("data")
+        .downField("repository")
+        .downField("pullRequests")
+      for {
+        prs <- downCursor.get[List[AuthorAndTimestamp]]("edges")
+        pageInfoCursor = downCursor.downField("pageInfo")
+        endCursor <- pageInfoCursor.get[String]("endCursor")
+        hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
+      } yield PullRequestsInfo(prs, endCursor, hasNextPage)
+    }
+  }
 }
