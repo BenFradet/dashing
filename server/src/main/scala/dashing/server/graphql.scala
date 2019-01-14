@@ -6,24 +6,32 @@ import cats.syntax.option._
 import cats.effect.Sync
 import fs2.{Chunk, Pull}
 import io.circe.Decoder
-import org.http4s.Uri
+import io.circe.generic.auto._
+import org.http4s.{Method, Request, Uri}
+import org.http4s.client.dsl._
+import org.http4s.circe._
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.Client
 
-object graphql {
-  val ghEndpoint = Uri.uri("https://api.github.com/graphql")
+class GraphQL[F[_]: Sync](client: Client[F]) extends Http4sClientDsl[F] {
+  import GraphQL._
 
-  def getPRs[F[_]](
-    client: Client[F],
-    owner: String,
-    name: String
-  )(pagination: Pagination): String = {
+  def getPRs(owner: String, name: String)(pagination: Pagination): F[PullRequestsInfo] = {
     val cursor = pagination.cursor.map("after:" + _).getOrElse("")
     val query =
-      s"""query {repository(owner:\"$owner\",name:\"$name\"){pullRequests(states:[OPEN,CLOSED,MERGED]first:${pagination.size} $cursor){edges{node{author{login}createdAt}}pageInfo{endCursor hasNextPage}}}}"""
-    query
-    //client.expect[String](ghEndpoint)
+      s"""query {repository(owner:"$owner",name:"$name"){pullRequests(states:[OPEN,CLOSED,MERGED]first:${pagination.size} $cursor){edges{node{author{login}createdAt}}pageInfo{endCursor hasNextPage}}}}"""
+    val request = Request[F](
+      method = Method.POST,
+      uri = ghEndpoint,
+    ).withEntity(Query(query))
+    client.expect[PullRequestsInfo](request)(jsonOf[F, PullRequestsInfo])
   }
+}
+
+object GraphQL {
+  val ghEndpoint = Uri.uri("https://api.github.com/graphql")
+
+  final case class Query(query: String)
 
   def autoPaginate[F[_]: Sync, T <: PageInfo](call: Pagination => F[T]): F[List[T]] = for {
     first <- call(Pagination(100, None))
