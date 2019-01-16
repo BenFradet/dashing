@@ -7,13 +7,13 @@ import cats.effect.Sync
 import fs2.{Chunk, Pull}
 import io.circe.Decoder
 import io.circe.generic.auto._
-import org.http4s.{Method, Request, Uri}
+import org.http4s.{Header, Headers, Method, Request, Uri}
 import org.http4s.client.dsl._
 import org.http4s.circe._
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.Client
 
-class GraphQL[F[_]: Sync](client: Client[F]) extends Http4sClientDsl[F] {
+class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClientDsl[F] {
   import GraphQL._
 
   def getPRs(owner: String, name: String): F[List[AuthorAndTimestamp]] = for {
@@ -30,6 +30,7 @@ class GraphQL[F[_]: Sync](client: Client[F]) extends Http4sClientDsl[F] {
     val request = Request[F](
       method = Method.POST,
       uri = ghEndpoint,
+      headers = Headers(Header("Authorization", s"token $token"))
     ).withEntity(Query(query))
     client.expect[PullRequestsInfo](request)(jsonOf[F, PullRequestsInfo])
   }
