@@ -21,10 +21,10 @@ class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClient
     list = prs.foldLeft(List.empty[AuthorAndTimestamp])((acc, e) => acc ++ e.pullRequests)
   } yield list
 
-  def getPRsWithPagination(
+  private def getPRsWithPagination(
     owner: String, name: String
   )(pagination: Pagination): F[PullRequestsInfo] = {
-    val cursor = pagination.cursor.map("after:" + _).getOrElse("")
+    val cursor = pagination.cursor.map(c => s"""after:"$c"""").getOrElse("")
     val query =
       s"""query {repository(owner:"$owner",name:"$name"){pullRequests(states:[OPEN,CLOSED,MERGED]first:${pagination.size} $cursor){edges{node{author{login}createdAt}}pageInfo{endCursor hasNextPage}}}}"""
     val request = Request[F](

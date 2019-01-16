@@ -36,8 +36,8 @@ object ServerStream {
             Cache.createCache[F, String, String](TimeSpec.fromDuration(c.cacheDuration)))
           client <- BlazeClientBuilder[F](ec).stream
           apiService =
-            new StarsRoutes[F].routes(client, cache, c.ghToken, c.starDashboards) <+>
-            new PullRequestsRoutes[F]().routes(client, cache, c.ghToken, c.prDashboards)
+            new StarsRoutes[F].routes(cache, c.ghToken, c.starDashboards) <+>
+            new PullRequestsRoutes[F]().routes(cache, c.ghToken, c.prDashboards)
           httpApp = Router(
             "/" -> new RenderingRoutes[F](ec).routes,
             "/api" -> apiService
