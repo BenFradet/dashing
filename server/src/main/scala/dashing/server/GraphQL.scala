@@ -34,6 +34,25 @@ class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClient
     ).withEntity(Query(query))
     client.expect[PullRequestsInfo](request)(jsonOf[F, PullRequestsInfo])
   }
+
+  def listStargazers(owner: String, name: String): F[List[String]] = for {
+    prs <- autoPaginate((p: Pagination) => listStargazersWithPagination(owner, name)(p))
+    list = prs.foldLeft(List.empty[String])((acc, e) => acc ++ e.starsTimeline)
+  } yield list
+
+  private def listStargazersWithPagination(
+    owner: String, name: String
+  )(pagination: Pagination): F[StarsInfo] = {
+    val cursor = pagination.cursor.map(c => s"""after:"$c"""").getOrElse("")
+    val query =
+      s"""query {repository(owner:"$owner",name:"$name"){stargazers(first:${pagination.size} $cursor){edges{starredAt}pageInfo{endCursor hasNextPage}}}}"""
+    val request = Request[F](
+      method = Method.POST,
+      uri = ghEndpoint,
+      headers = Headers(Header("Authorization", s"token $token"))
+    ).withEntity(Query(query))
+    client.expect[StarsInfo](request)(jsonOf[F, StarsInfo])
+  }
 }
 
 object GraphQL {
@@ -113,6 +132,7 @@ object GraphQL {
     implicit val decoder: Decoder[StarsInfo] = Decoder.instance { c =>
       val downCursor = c
         .downField("data")
+        .downField("repository")
         .downField("stargazers")
       for {
         rawStars <- downCursor.get[List[Map[String, String]]]("edges")
