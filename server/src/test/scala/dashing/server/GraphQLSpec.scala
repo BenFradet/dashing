@@ -19,8 +19,12 @@ class GraphQLSpec extends Specification with IOMatchers {
   "GraphQL" should {
     "get all PRs of a particular repo with pagination" in {
       val prs = graphQL.getPRs("snowplow", "snowplow").unsafeRunSync
-      println(prs)
       prs.size must be_>(100)
+    }
+
+    "list all stargazers of a particular repo with pagination" in {
+      val stars = graphQL.listStargazers("snowplow", "snowplow").unsafeRunSync
+      stars.size must be_>(100)
     }
   }
 }
