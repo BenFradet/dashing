@@ -104,4 +104,23 @@ object GraphQL {
       } yield PullRequestsInfo(prs, endCursor, hasNextPage)
     }
   }
+  final case class StarsInfo(
+    starsTimeline: List[String],
+    endCursor: String,
+    hasNextPage: Boolean
+  ) extends PageInfo
+  object StarsInfo {
+    implicit val decoder: Decoder[StarsInfo] = Decoder.instance { c =>
+      val downCursor = c
+        .downField("data")
+        .downField("stargazers")
+      for {
+        rawStars <- downCursor.get[List[Map[String, String]]]("edges")
+        starsTimeline = rawStars.map(_.values).flatten
+        pageInfoCursor = downCursor.downField("pageInfo")
+        endCursor <- pageInfoCursor.get[String]("endCursor")
+        hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
+      } yield StarsInfo(starsTimeline, endCursor, hasNextPage)
+    }
+  }
 }
