@@ -1,7 +1,6 @@
 package dashing.client
 
 import japgolly.scalajs.react._, vdom.html_<^._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router._
 import org.scalajs.dom
 

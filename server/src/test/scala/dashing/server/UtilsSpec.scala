@@ -57,7 +57,6 @@ class UtilsSpec extends Specification with Http4sMatchers[IO] with IOMatchers {
   "utils.computeMonthlyTimeline" should {
     "compute a monthly count" in {
       utils.computeMonthlyTimeline(List("2018-01", "2018-05"), 365.days) must_== Map(
-        "2018-01" -> 1d,
         "2018-02" -> 0d,
         "2018-03" -> 0d,
         "2018-04" -> 0d,
@@ -70,10 +69,11 @@ class UtilsSpec extends Specification with Http4sMatchers[IO] with IOMatchers {
         "2018-11" -> 0d,
         "2018-12" -> 0d,
         "2019-01" -> 0d,
+        "2019-02" -> 0d,
       )
     }
     "cutoff based on the lookback" in {
-      utils.computeMonthlyTimeline(List("2018-01", "2018-05"), 1.day) must_== Map("2019-01" -> 0d)
+      utils.computeMonthlyTimeline(List("2018-01", "2018-05"), 1.day) must_== Map("2019-02" -> 0d)
     }
     "return an empty map if the timeline doesn't contain YYYY-MM" in {
       utils.computeMonthlyTimeline(List("test", "test2"), 365.days) must_== Map.empty
