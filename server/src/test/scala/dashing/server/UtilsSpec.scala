@@ -12,6 +12,7 @@ import org.specs2.mutable.Specification
 import model._
 
 class UtilsSpec extends Specification with Http4sMatchers[IO] with IOMatchers {
+  args(skipAll = sys.env.get("GITHUB_ACCESS_TOKEN").isEmpty)
 
   val gh = Github(sys.env.get("GITHUB_ACCESS_TOKEN"))
 
