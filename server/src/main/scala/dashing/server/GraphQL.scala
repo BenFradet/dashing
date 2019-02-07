@@ -53,6 +53,25 @@ class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClient
     ).withEntity(Query(query))
     client.expect[StarsInfo](request)(jsonOf[F, StarsInfo])
   }
+
+  def getOrgMembers(org: String): F[List[String]] = for {
+    members <- autoPaginate((p: Pagination) => getOrgMembersWithPagination(org)(p))
+    list = members.foldLeft(List.empty[String])((acc, e) => acc ++ e.members)
+  } yield list
+
+  private def getOrgMembersWithPagination(
+    org: String
+  )(pagination: Pagination): F[OrgMembersInfo] = {
+    val cursor = pagination.cursor.map(c => s"""after:"$c"""").getOrElse("")
+    val query =
+      s"""query {organization(login: "$org"){membersWithRole(first: ${pagination.size} $cursor){nodes{login}pageInfo{endCursor hasNextPage}}}}"""
+    val request = Request[F](
+      method = Method.POST,
+      uri = ghEndpoint,
+      headers = Headers(Header("Authorization", s"token $token"))
+    ).withEntity(Query(query))
+    client.expect[OrgMembersInfo](request)(jsonOf[F, OrgMembersInfo])
+  }
 }
 
 object GraphQL {
