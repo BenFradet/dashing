@@ -37,14 +37,25 @@ If you want to use it for your own organization, you can pass a custom
 # Github access token
 ghToken = token
 
-# Github organization from which to retrieve the data
-org = snowplow
+# Configuration for the dashboards about pull requests
+prDashboards = {
+  # Github organizations from which to retrieve the data regarding pull requests
+  orgs = [ snowplow ]
+  # List of github handles to ignore, for example if they're wrongly not part of the org
+  peopleToIgnore = [ "scala-steward" ]
+  # How far in the past the GitHub pull request data lookups should go
+  lookback = 730 days
+}
 
-# Name of the most popular repository inside the organization specified above
-heroRepo = snowplow
-
-# Number of most popular repositories to analyze (hero repo excluded)
-topNRepos = 5
+# Configuration for the dashboards about stars
+starDashboards = {
+  # Github organization from which to retrieve the data regarding stars
+  org = snowplow
+  # Name of the most popular repository for the hero repo dashboard
+  heroRepo = snowplow
+  # Number of most popular repositories to analyze (hero repo excluded)
+  topNRepos = 5
+}
 
 # Duration for which data from GitHub is cached
 cacheDuration = 12 hours
