@@ -143,4 +143,24 @@ object GraphQL {
       } yield StarsInfo(starsTimeline, endCursor, hasNextPage)
     }
   }
+  final case class OrgMembersInfo(
+    members: List[String],
+    endCursor: String,
+    hasNextPage: Boolean
+  ) extends PageInfo
+  object OrgMembersInfo {
+    implicit val decoder: Decoder[OrgMembersInfo] = Decoder.instance { c =>
+      val downCursor = c
+        .downField("data")
+        .downField("organization")
+        .downField("membersWithRole")
+      for {
+        rawMembers <- downCursor.get[List[Map[String, String]]]("nodes")
+        members = rawMembers.map(_.values).flatten
+        pageInfoCursor = downCursor.downField("pageInfo")
+        endCursor <- pageInfoCursor.get[String]("endCursor")
+        hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
+      } yield OrgMembersInfo(members, endCursor, hasNextPage)
+    }
+  }
 }
