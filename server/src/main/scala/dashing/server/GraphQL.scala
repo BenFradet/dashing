@@ -177,4 +177,19 @@ object GraphQL {
       } yield OrgMembersInfo(members, endCursor, hasNextPage)
     }.prepare(_.downField("data").downField("organization").downField("membersWithRole"))
   }
+  final case class OrgRepositoriesInfo(
+    repositoriesAndStars: List[RepositoryAndStars],
+    endCursor: String,
+    hasNextPage: Boolean
+  ) extends PageInfo
+  object OrgRepositoriesInfo {
+    implicit val decoder: Decoder[OrgRepositoriesInfo] = Decoder.instance { c =>
+      for {
+        repositoriesAndStars <- c.get[List[RepositoryAndStars]]("nodes")
+        pageInfoCursor = c.downField("pageInfo")
+        endCursor <- pageInfoCursor.get[String]("endCursor")
+        hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
+      } yield OrgRepositoriesInfo(repositoriesAndStars, endCursor, hasNextPage)
+    }.prepare(_.downField("data").downField("organization").downField("repositories"))
+  }
 }
