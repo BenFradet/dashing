@@ -58,6 +58,21 @@ class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClient
     request(Query(query))
   }
 
+  def getRepositories(org: String): F[List[RepositoryAndStars]] = for {
+    repositories <- autoPaginate((p: Pagination) => getRepositoriesWithPagination(org)(p))
+    list = repositories
+      .foldLeft(List.empty[RepositoryAndStars])((acc, e) => acc ++ e.repositoriesAndStars)
+  } yield list
+
+  private def getRepositoriesWithPagination(
+    org: String
+  )(pagination: Pagination): F[OrgRepositoriesInfo] = {
+    val cursor = pagination.cursor.map(c => s"""after:"$c"""").getOrElse("")
+    val query =
+      s"""query {organization(login: "$org"){repositories(first: ${pagination.size} $cursor){nodes{ name stargazers(first: 100){totalCount}}pageInfo{endCursor hasNextPage}}}}"""
+    request(Query(query))
+  }
+
   private def request[A: Decoder](query: Query): F[A] = {
     val request = Request[F](
       method = Method.POST,
