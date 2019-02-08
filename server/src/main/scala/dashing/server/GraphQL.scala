@@ -124,17 +124,13 @@ object GraphQL {
   ) extends PageInfo
   object PullRequestsInfo {
     implicit val decoder: Decoder[PullRequestsInfo] = Decoder.instance { c =>
-      val downCursor = c
-        .downField("data")
-        .downField("repository")
-        .downField("pullRequests")
       for {
-        prs <- downCursor.get[List[AuthorAndTimestamp]]("edges")
-        pageInfoCursor = downCursor.downField("pageInfo")
+        prs <- c.get[List[AuthorAndTimestamp]]("edges")
+        pageInfoCursor = c.downField("pageInfo")
         endCursor <- pageInfoCursor.get[String]("endCursor")
         hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
       } yield PullRequestsInfo(prs, endCursor, hasNextPage)
-    }
+    }.prepare(_.downField("data").downField("repository").downField("pullRequests"))
   }
   final case class StarsInfo(
     starsTimeline: List[String],
@@ -143,18 +139,14 @@ object GraphQL {
   ) extends PageInfo
   object StarsInfo {
     implicit val decoder: Decoder[StarsInfo] = Decoder.instance { c =>
-      val downCursor = c
-        .downField("data")
-        .downField("repository")
-        .downField("stargazers")
       for {
-        rawStars <- downCursor.get[List[Map[String, String]]]("edges")
+        rawStars <- c.get[List[Map[String, String]]]("edges")
         starsTimeline = rawStars.map(_.values).flatten
-        pageInfoCursor = downCursor.downField("pageInfo")
+        pageInfoCursor = c.downField("pageInfo")
         endCursor <- pageInfoCursor.get[String]("endCursor")
         hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
       } yield StarsInfo(starsTimeline, endCursor, hasNextPage)
-    }
+    }.prepare(_.downField("data").downField("repository").downField("stargazers"))
   }
   final case class OrgMembersInfo(
     members: List[String],
@@ -163,17 +155,13 @@ object GraphQL {
   ) extends PageInfo
   object OrgMembersInfo {
     implicit val decoder: Decoder[OrgMembersInfo] = Decoder.instance { c =>
-      val downCursor = c
-        .downField("data")
-        .downField("organization")
-        .downField("membersWithRole")
       for {
-        rawMembers <- downCursor.get[List[Map[String, String]]]("nodes")
+        rawMembers <- c.get[List[Map[String, String]]]("nodes")
         members = rawMembers.map(_.values).flatten
-        pageInfoCursor = downCursor.downField("pageInfo")
+        pageInfoCursor = c.downField("pageInfo")
         endCursor <- pageInfoCursor.get[String]("endCursor")
         hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
       } yield OrgMembersInfo(members, endCursor, hasNextPage)
-    }
+    }.prepare(_.downField("data").downField("organization").downField("membersWithRole"))
   }
 }
