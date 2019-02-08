@@ -26,5 +26,10 @@ class GraphQLSpec extends Specification with IOMatchers {
       val stars = graphQL.listStargazers("snowplow", "snowplow").unsafeRunSync
       stars.size must be_>(100)
     }
+
+    "get org members of a particular org with pagination" in {
+      val members = graphQL.getOrgMembers("snowplow").unsafeRunSync
+      members.size must be_>(10)
+    }
   }
 }
