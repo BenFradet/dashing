@@ -27,12 +27,7 @@ class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClient
     val cursor = pagination.cursor.map(c => s"""after:"$c"""").getOrElse("")
     val query =
       s"""query {repository(owner:"$owner",name:"$name"){pullRequests(states:[OPEN,CLOSED,MERGED]first:${pagination.size} $cursor){edges{node{author{login}createdAt}}pageInfo{endCursor hasNextPage}}}}"""
-    val request = Request[F](
-      method = Method.POST,
-      uri = ghEndpoint,
-      headers = Headers(Header("Authorization", s"token $token"))
-    ).withEntity(Query(query))
-    client.expect[PullRequestsInfo](request)(jsonOf[F, PullRequestsInfo])
+    request(Query(query))
   }
 
   def listStargazers(owner: String, name: String): F[List[String]] = for {
@@ -46,12 +41,7 @@ class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClient
     val cursor = pagination.cursor.map(c => s"""after:"$c"""").getOrElse("")
     val query =
       s"""query {repository(owner:"$owner",name:"$name"){stargazers(first:${pagination.size} $cursor){edges{starredAt}pageInfo{endCursor hasNextPage}}}}"""
-    val request = Request[F](
-      method = Method.POST,
-      uri = ghEndpoint,
-      headers = Headers(Header("Authorization", s"token $token"))
-    ).withEntity(Query(query))
-    client.expect[StarsInfo](request)(jsonOf[F, StarsInfo])
+    request(Query(query))
   }
 
   def getOrgMembers(org: String): F[List[String]] = for {
@@ -65,12 +55,16 @@ class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClient
     val cursor = pagination.cursor.map(c => s"""after:"$c"""").getOrElse("")
     val query =
       s"""query {organization(login: "$org"){membersWithRole(first: ${pagination.size} $cursor){nodes{login}pageInfo{endCursor hasNextPage}}}}"""
+    request(Query(query))
+  }
+
+  private def request[A: Decoder](query: Query): F[A] = {
     val request = Request[F](
       method = Method.POST,
       uri = ghEndpoint,
       headers = Headers(Header("Authorization", s"token $token"))
-    ).withEntity(Query(query))
-    client.expect[OrgMembersInfo](request)(jsonOf[F, OrgMembersInfo])
+    ).withEntity(query)
+    client.expect[A](request)(jsonOf[F, A])
   }
 }
 
