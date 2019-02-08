@@ -107,9 +107,22 @@ object GraphQL {
   object AuthorAndTimestamp {
     implicit val decoder: Decoder[AuthorAndTimestamp] = Decoder.instance { c =>
       for {
-        author <- c.downField("node").downField("author").get[String]("login")
-        timestamp <- c.downField("node").get[String]("createdAt")
+        author <- c.downField("author").get[String]("login")
+        timestamp <- c.get[String]("createdAt")
       } yield AuthorAndTimestamp(author, timestamp)
+    }.prepare(_.downField("node"))
+  }
+
+  final case class RepositoryAndStars(
+    repository: String,
+    firstHundredStars: Int
+  )
+  object RepositoryAndStars {
+    implicit val decoder: Decoder[RepositoryAndStars] = Decoder.instance { c =>
+      for {
+        name <- c.get[String]("name")
+        firstHundredStars <- c.downField("stargazers").get[Int]("totalCount")
+      } yield RepositoryAndStars(name, firstHundredStars)
     }
   }
 
