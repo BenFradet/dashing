@@ -60,3 +60,19 @@ object OrgMembersInfoLawSpec {
     hasNextPage <- Gen.oneOf(true, false)
   } yield OrgMembersInfo(members, endCursor, hasNextPage))
 }
+
+class OrgRepositoriesInfoLawSpec extends Specification with Discipline { def is = {
+  import OrgRepositoriesInfoLawSpec._
+  checkAll("OrgRepositoriesInfo.MonoidLaws", MonoidTests[OrgRepositoriesInfo].monoid)
+} }
+object OrgRepositoriesInfoLawSpec {
+  implicit def arbOrgRepositoriesInfo: Arbitrary[OrgRepositoriesInfo] = Arbitrary(for {
+    repository <- Gen.alphaStr
+    stars <- Gen.chooseNum(1, 1000)
+    repositoryAndStars <- Gen.zip(repository, stars)
+      .map { case(repository, stars) => RepositoryAndStars(repository, stars) }
+    repositoriesAndStars <- Gen.listOf(repositoryAndStars)
+    endCursor <- Gen.alphaStr
+    hasNextPage <- Gen.oneOf(true, false)
+  } yield OrgRepositoriesInfo(repositoriesAndStars, endCursor, hasNextPage))
+}

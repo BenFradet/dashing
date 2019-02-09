@@ -181,8 +181,8 @@ object model {
         def combine(o1: OrgRepositoriesInfo, o2: OrgRepositoriesInfo): OrgRepositoriesInfo =
           OrgRepositoriesInfo(
             o1.repositoriesAndStars |+| o2.repositoriesAndStars,
-            "",
-            o1.hasNextPage || o2.hasNextPage
+            o1.endCursor |+| o2.endCursor,
+            o1.hasNextPage && o2.hasNextPage
           )
         def empty: OrgRepositoriesInfo = OrgRepositoriesInfo(List.empty, "", true)
       }
