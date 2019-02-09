@@ -61,12 +61,12 @@ class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClient
     request(Query(query))
   }
 
-  def getRepositories(org: String): F[OrgRepositoriesInfo] = for {
-    repositories <- autoPaginate((p: Pagination) => getRepositoriesWithPagination(org)(p))
+  def getOrgRepositories(org: String): F[OrgRepositoriesInfo] = for {
+    repositories <- autoPaginate((p: Pagination) => getOrgRepositoriesWithPagination(org)(p))
     finalInfo = Monoid.combineAll(repositories)
   } yield finalInfo
 
-  private def getRepositoriesWithPagination(
+  private def getOrgRepositoriesWithPagination(
     org: String
   )(pagination: Pagination): F[OrgRepositoriesInfo] = {
     val cursor = pagination.cursor.map(c => s"""after:"$c"""").getOrElse("")
