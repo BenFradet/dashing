@@ -140,8 +140,8 @@ object model {
       def combine(o1: OrgMembersInfo, o2: OrgMembersInfo): OrgMembersInfo =
         OrgMembersInfo(
           o1.members |+| o2.members,
-          "",
-          o1.hasNextPage || o2.hasNextPage
+          o1.endCursor |+| o2.endCursor,
+          o1.hasNextPage && o2.hasNextPage
         )
       def empty: OrgMembersInfo = OrgMembersInfo(List.empty, "", true)
     }

@@ -47,3 +47,16 @@ object PullRequestsInfoLawSpec {
     hasNextPage <- Gen.oneOf(true, false)
   } yield PullRequestsInfo(pullRequests, endCursor, hasNextPage))
 }
+
+class OrgMembersInfoLawSpec extends Specification with Discipline { def is = {
+  import OrgMembersInfoLawSpec._
+  checkAll("OrgMembersInfo.MonoidLaws", MonoidTests[OrgMembersInfo].monoid)
+} }
+object OrgMembersInfoLawSpec {
+  implicit def arbOrgMembersInfo: Arbitrary[OrgMembersInfo] = Arbitrary(for {
+    member <- Gen.alphaStr
+    members <- Gen.listOf(member)
+    endCursor <- Gen.alphaStr
+    hasNextPage <- Gen.oneOf(true, false)
+  } yield OrgMembersInfo(members, endCursor, hasNextPage))
+}
