@@ -31,3 +31,19 @@ object StarsInfoLawSpec {
     hasNextPage <- Gen.oneOf(true, false)
   } yield StarsInfo(timeline, endCursor, hasNextPage))
 }
+
+class PullRequestsInfoLawSpec extends Specification with Discipline { def is = {
+  import PullRequestsInfoLawSpec._
+  checkAll("PullRequestsInfo.MonoidLaws", MonoidTests[PullRequestsInfo].monoid)
+} }
+object PullRequestsInfoLawSpec {
+  implicit def arbPullRequestsInfo: Arbitrary[PullRequestsInfo] = Arbitrary(for {
+    author <- Gen.alphaStr
+    timestamp <- Gen.alphaStr
+    authorAndTimestamp <- Gen.zip(author, timestamp)
+      .map { case (author, timestamp) => AuthorAndTimestamp(author, timestamp) }
+    pullRequests <- Gen.listOf(authorAndTimestamp)
+    endCursor <- Gen.alphaStr
+    hasNextPage <- Gen.oneOf(true, false)
+  } yield PullRequestsInfo(pullRequests, endCursor, hasNextPage))
+}

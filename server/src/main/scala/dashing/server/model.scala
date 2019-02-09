@@ -113,8 +113,8 @@ object model {
       def combine(p1: PullRequestsInfo, p2: PullRequestsInfo): PullRequestsInfo =
         PullRequestsInfo(
           p1.pullRequests |+| p2.pullRequests,
-          "",
-          p1.hasNextPage || p2.hasNextPage
+          p1.endCursor |+| p2.endCursor,
+          p1.hasNextPage && p2.hasNextPage
         )
       def empty: PullRequestsInfo = PullRequestsInfo(List.empty, "", true)
     }
