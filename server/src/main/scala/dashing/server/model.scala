@@ -75,8 +75,8 @@ object model {
       def combine(s1: StarsInfo, s2: StarsInfo): StarsInfo =
         StarsInfo(
           s1.starsTimeline |+| s2.starsTimeline,
-          "",
-          s1.hasNextPage || s2.hasNextPage
+          s1.endCursor |+| s2.endCursor,
+          s1.hasNextPage && s2.hasNextPage
         )
       def empty: StarsInfo = StarsInfo(List.empty, "", true)
     }
