@@ -1,5 +1,6 @@
 package dashing.server
 
+import cats.Monoid
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.option._
@@ -13,13 +14,15 @@ import org.http4s.circe._
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.Client
 
+import model._
+
 class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClientDsl[F] {
   import GraphQL._
 
-  def getPRs(owner: String, name: String): F[List[AuthorAndTimestamp]] = for {
+  def getPRs(owner: String, name: String): F[PullRequestsInfo] = for {
     prs <- autoPaginate((p: Pagination) => getPRsWithPagination(owner, name)(p))
-    list = prs.foldLeft(List.empty[AuthorAndTimestamp])((acc, e) => acc ++ e.pullRequests)
-  } yield list
+    finalInfo = Monoid.combineAll(prs)
+  } yield finalInfo
 
   private def getPRsWithPagination(
     owner: String, name: String
@@ -30,10 +33,10 @@ class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClient
     request(Query(query))
   }
 
-  def listStargazers(owner: String, name: String): F[List[String]] = for {
+  def listStargazers(owner: String, name: String): F[StarsInfo] = for {
     prs <- autoPaginate((p: Pagination) => listStargazersWithPagination(owner, name)(p))
-    list = prs.foldLeft(List.empty[String])((acc, e) => acc ++ e.starsTimeline)
-  } yield list
+    finalInfo = Monoid.combineAll(prs)
+  } yield finalInfo
 
   private def listStargazersWithPagination(
     owner: String, name: String
@@ -44,10 +47,10 @@ class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClient
     request(Query(query))
   }
 
-  def getOrgMembers(org: String): F[List[String]] = for {
+  def getOrgMembers(org: String): F[OrgMembersInfo] = for {
     members <- autoPaginate((p: Pagination) => getOrgMembersWithPagination(org)(p))
-    list = members.foldLeft(List.empty[String])((acc, e) => acc ++ e.members)
-  } yield list
+    finalInfo = Monoid.combineAll(members)
+  } yield finalInfo
 
   private def getOrgMembersWithPagination(
     org: String
@@ -58,11 +61,10 @@ class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClient
     request(Query(query))
   }
 
-  def getRepositories(org: String): F[List[RepositoryAndStars]] = for {
+  def getRepositories(org: String): F[OrgRepositoriesInfo] = for {
     repositories <- autoPaginate((p: Pagination) => getRepositoriesWithPagination(org)(p))
-    list = repositories
-      .foldLeft(List.empty[RepositoryAndStars])((acc, e) => acc ++ e.repositoriesAndStars)
-  } yield list
+    finalInfo = Monoid.combineAll(repositories)
+  } yield finalInfo
 
   private def getRepositoriesWithPagination(
     org: String
@@ -114,97 +116,4 @@ object GraphQL {
     }
 
   final case class Pagination(size: Int, cursor: Option[String])
-
-  final case class AuthorAndTimestamp(
-    author: String,
-    timestamp: String
-  )
-  object AuthorAndTimestamp {
-    implicit val decoder: Decoder[AuthorAndTimestamp] = Decoder.instance { c =>
-      for {
-        author <- c.downField("author").get[String]("login")
-        timestamp <- c.get[String]("createdAt")
-      } yield AuthorAndTimestamp(author, timestamp)
-    }.prepare(_.downField("node"))
-  }
-
-  final case class RepositoryAndStars(
-    repository: String,
-    firstHundredStars: Int
-  )
-  object RepositoryAndStars {
-    implicit val decoder: Decoder[RepositoryAndStars] = Decoder.instance { c =>
-      for {
-        name <- c.get[String]("name")
-        firstHundredStars <- c.downField("stargazers").get[Int]("totalCount")
-      } yield RepositoryAndStars(name, firstHundredStars)
-    }
-  }
-
-  sealed trait PageInfo {
-    def endCursor: String
-    def hasNextPage: Boolean
-  }
-  final case class PullRequestsInfo(
-    pullRequests: List[AuthorAndTimestamp],
-    endCursor: String,
-    hasNextPage: Boolean
-  ) extends PageInfo
-  object PullRequestsInfo {
-    implicit val decoder: Decoder[PullRequestsInfo] = Decoder.instance { c =>
-      for {
-        prs <- c.get[List[AuthorAndTimestamp]]("edges")
-        pageInfoCursor = c.downField("pageInfo")
-        endCursor <- pageInfoCursor.get[String]("endCursor")
-        hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
-      } yield PullRequestsInfo(prs, endCursor, hasNextPage)
-    }.prepare(_.downField("data").downField("repository").downField("pullRequests"))
-  }
-  final case class StarsInfo(
-    starsTimeline: List[String],
-    endCursor: String,
-    hasNextPage: Boolean
-  ) extends PageInfo
-  object StarsInfo {
-    implicit val decoder: Decoder[StarsInfo] = Decoder.instance { c =>
-      for {
-        rawStars <- c.get[List[Map[String, String]]]("edges")
-        starsTimeline = rawStars.map(_.values).flatten
-        pageInfoCursor = c.downField("pageInfo")
-        endCursor <- pageInfoCursor.get[String]("endCursor")
-        hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
-      } yield StarsInfo(starsTimeline, endCursor, hasNextPage)
-    }.prepare(_.downField("data").downField("repository").downField("stargazers"))
-  }
-  final case class OrgMembersInfo(
-    members: List[String],
-    endCursor: String,
-    hasNextPage: Boolean
-  ) extends PageInfo
-  object OrgMembersInfo {
-    implicit val decoder: Decoder[OrgMembersInfo] = Decoder.instance { c =>
-      for {
-        rawMembers <- c.get[List[Map[String, String]]]("nodes")
-        members = rawMembers.map(_.values).flatten
-        pageInfoCursor = c.downField("pageInfo")
-        endCursor <- pageInfoCursor.get[String]("endCursor")
-        hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
-      } yield OrgMembersInfo(members, endCursor, hasNextPage)
-    }.prepare(_.downField("data").downField("organization").downField("membersWithRole"))
-  }
-  final case class OrgRepositoriesInfo(
-    repositoriesAndStars: List[RepositoryAndStars],
-    endCursor: String,
-    hasNextPage: Boolean
-  ) extends PageInfo
-  object OrgRepositoriesInfo {
-    implicit val decoder: Decoder[OrgRepositoriesInfo] = Decoder.instance { c =>
-      for {
-        repositoriesAndStars <- c.get[List[RepositoryAndStars]]("nodes")
-        pageInfoCursor = c.downField("pageInfo")
-        endCursor <- pageInfoCursor.get[String]("endCursor")
-        hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
-      } yield OrgRepositoriesInfo(repositoriesAndStars, endCursor, hasNextPage)
-    }.prepare(_.downField("data").downField("organization").downField("repositories"))
-  }
 }
