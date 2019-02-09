@@ -146,4 +146,45 @@ object model {
       def empty: OrgMembersInfo = OrgMembersInfo(List.empty, "", true)
     }
   }
+
+  final case class RepositoryAndStars(
+    repository: String,
+    firstHundredStars: Int
+  )
+  object RepositoryAndStars {
+    implicit val decoder: Decoder[RepositoryAndStars] = Decoder.instance { c =>
+      for {
+        name <- c.get[String]("name")
+        firstHundredStars <- c.downField("stargazers").get[Int]("totalCount")
+      } yield RepositoryAndStars(name, firstHundredStars)
+    }
+  }
+  final case class OrgRepositoriesInfo(
+    repositoriesAndStars: List[RepositoryAndStars],
+    endCursor: String,
+    hasNextPage: Boolean
+  ) extends PageInfo
+  object OrgRepositoriesInfo {
+    implicit val decoder: Decoder[OrgRepositoriesInfo] = Decoder.instance { c =>
+      for {
+        repositoriesAndStars <- c.get[List[RepositoryAndStars]]("nodes")
+        pageInfoCursor = c.downField("pageInfo")
+        endCursor <- pageInfoCursor.get[String]("endCursor")
+        hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
+      } yield OrgRepositoriesInfo(repositoriesAndStars, endCursor, hasNextPage)
+    }.prepare(_.downField("data").downField("organization").downField("repositories"))
+
+    implicit val orgRepositoriesInfoEq: Eq[OrgRepositoriesInfo] = Eq.fromUniversalEquals
+
+    implicit val orgRepositoriesInfoMonoid: Monoid[OrgRepositoriesInfo] =
+      new Monoid[OrgRepositoriesInfo] {
+        def combine(o1: OrgRepositoriesInfo, o2: OrgRepositoriesInfo): OrgRepositoriesInfo =
+          OrgRepositoriesInfo(
+            o1.repositoriesAndStars |+| o2.repositoriesAndStars,
+            "",
+            o1.hasNextPage || o2.hasNextPage
+          )
+        def empty: OrgRepositoriesInfo = OrgRepositoriesInfo(List.empty, "", true)
+      }
+  }
 }
