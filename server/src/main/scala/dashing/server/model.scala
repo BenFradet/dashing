@@ -5,6 +5,7 @@ import scala.concurrent.duration.FiniteDuration
 import cats.{Eq, Monoid}
 import cats.instances.all._
 import cats.syntax.semigroup._
+import io.circe.Decoder
 
 object model {
   final case class StarDashboardsConfig(
@@ -48,4 +49,36 @@ object model {
     }
   }
   final case class Repos(repos: List[Repo])
+
+  sealed trait PageInfo {
+    def endCursor: String
+    def hasNextPage: Boolean
+  }
+
+  final case class StarsInfo(
+    starsTimeline: List[String],
+    endCursor: String,
+    hasNextPage: Boolean
+  ) extends PageInfo
+  object StarsInfo {
+    implicit val decoder: Decoder[StarsInfo] = Decoder.instance { c =>
+      for {
+        rawStars <- c.get[List[Map[String, String]]]("edges")
+        starsTimeline = rawStars.map(_.values).flatten
+        pageInfoCursor = c.downField("pageInfo")
+        endCursor <- pageInfoCursor.get[String]("endCursor")
+        hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
+      } yield StarsInfo(starsTimeline, endCursor, hasNextPage)
+    }.prepare(_.downField("data").downField("repository").downField("stargazers"))
+    implicit val starsInfoEq: Eq[StarsInfo] = Eq.fromUniversalEquals
+    implicit val starsInfoMonoid: Monoid[StarsInfo] = new Monoid[StarsInfo] {
+      def combine(s1: StarsInfo, s2: StarsInfo): StarsInfo =
+        StarsInfo(
+          s1.starsTimeline |+| s2.starsTimeline,
+          "",
+          s1.hasNextPage || s2.hasNextPage
+        )
+      def empty: StarsInfo = StarsInfo(List.empty, "", true)
+    }
+  }
 }
