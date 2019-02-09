@@ -119,4 +119,31 @@ object model {
       def empty: PullRequestsInfo = PullRequestsInfo(List.empty, "", true)
     }
   }
+
+  final case class OrgMembersInfo(
+    members: List[String],
+    endCursor: String,
+    hasNextPage: Boolean
+  ) extends PageInfo
+  object OrgMembersInfo {
+    implicit val decoder: Decoder[OrgMembersInfo] = Decoder.instance { c =>
+      for {
+        rawMembers <- c.get[List[Map[String, String]]]("nodes")
+        members = rawMembers.map(_.values).flatten
+        pageInfoCursor = c.downField("pageInfo")
+        endCursor <- pageInfoCursor.get[String]("endCursor")
+        hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
+      } yield OrgMembersInfo(members, endCursor, hasNextPage)
+    }.prepare(_.downField("data").downField("organization").downField("membersWithRole"))
+    implicit val orgMembersInfoEq: Eq[OrgMembersInfo] = Eq.fromUniversalEquals
+    implicit val orgMembersInfoMonoid: Monoid[OrgMembersInfo] = new Monoid[OrgMembersInfo] {
+      def combine(o1: OrgMembersInfo, o2: OrgMembersInfo): OrgMembersInfo =
+        OrgMembersInfo(
+          o1.members |+| o2.members,
+          "",
+          o1.hasNextPage || o2.hasNextPage
+        )
+      def empty: OrgMembersInfo = OrgMembersInfo(List.empty, "", true)
+    }
+  }
 }
