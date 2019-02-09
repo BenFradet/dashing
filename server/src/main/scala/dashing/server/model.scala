@@ -81,4 +81,42 @@ object model {
       def empty: StarsInfo = StarsInfo(List.empty, "", true)
     }
   }
+
+  final case class AuthorAndTimestamp(
+    author: String,
+    timestamp: String
+  )
+  object AuthorAndTimestamp {
+    implicit val decoder: Decoder[AuthorAndTimestamp] = Decoder.instance { c =>
+      for {
+        author <- c.downField("author").get[String]("login")
+        timestamp <- c.get[String]("createdAt")
+      } yield AuthorAndTimestamp(author, timestamp)
+    }.prepare(_.downField("node"))
+  }
+  final case class PullRequestsInfo(
+    pullRequests: List[AuthorAndTimestamp],
+    endCursor: String,
+    hasNextPage: Boolean
+  ) extends PageInfo
+  object PullRequestsInfo {
+    implicit val decoder: Decoder[PullRequestsInfo] = Decoder.instance { c =>
+      for {
+        prs <- c.get[List[AuthorAndTimestamp]]("edges")
+        pageInfoCursor = c.downField("pageInfo")
+        endCursor <- pageInfoCursor.get[String]("endCursor")
+        hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
+      } yield PullRequestsInfo(prs, endCursor, hasNextPage)
+    }.prepare(_.downField("data").downField("repository").downField("pullRequests"))
+    implicit val prsInfoEq: Eq[PullRequestsInfo] = Eq.fromUniversalEquals
+    implicit val prsInfoMonoid: Monoid[PullRequestsInfo] = new Monoid[PullRequestsInfo] {
+      def combine(p1: PullRequestsInfo, p2: PullRequestsInfo): PullRequestsInfo =
+        PullRequestsInfo(
+          p1.pullRequests |+| p2.pullRequests,
+          "",
+          p1.hasNextPage || p2.hasNextPage
+        )
+      def empty: PullRequestsInfo = PullRequestsInfo(List.empty, "", true)
+    }
+  }
 }
