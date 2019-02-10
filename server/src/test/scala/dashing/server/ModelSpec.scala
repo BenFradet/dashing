@@ -101,5 +101,16 @@ class ModelSpec extends org.specs2.mutable.Specification with Matchers {
         }
       }""").isRight must beTrue
     }
+    "provide a decoder for AuthorAndTimestamp" in {
+      decode[AuthorAndTimestamp]("""
+      {
+        "node": {
+          "author": {
+            "login": "BenFradet"
+          },
+          "createdAt": "2016-11-28T20:41:21Z"
+        }
+      }""").isRight must beTrue
+    }
   }
 }
