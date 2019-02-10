@@ -166,5 +166,28 @@ class ModelSpec extends org.specs2.mutable.Specification with Matchers {
         }
       }""").isRight must beTrue
     }
+    "provide a decoder for OrgRepositoriesInfo" in {
+      decode[OrgRepositoriesInfo]("""
+      {
+        "data": {
+          "organization": {
+            "repositories": {
+              "nodes": [
+                {
+                  "name": "igwp",
+                  "stargazers": {
+                    "totalCount": 1
+                  }
+                }
+              ],
+              "pageInfo": {
+                "endCursor": "NA",
+                "hasNextPage": false
+              }
+            }
+          }
+        }
+      }""").isRight must beTrue
+    }
   }
 }
