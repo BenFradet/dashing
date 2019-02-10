@@ -137,5 +137,25 @@ class ModelSpec extends org.specs2.mutable.Specification with Matchers {
         }
       }""").isRight must beTrue
     }
+    "provide a decoder for OrgMembersInfo" in {
+      decode[OrgMembersInfo]("""
+      {
+        "data": {
+          "organization": {
+            "membersWithRole": {
+              "nodes": [
+                {
+                  "login": "BenFradet"
+                }
+              ],
+              "pageInfo": {
+                "endCursor": "Y3Vyc29yOnYyOpHOABqB-w==",
+                "hasNextPage": false
+              }
+            }
+          }
+        }
+      }""").isRight must beTrue
+    }
   }
 }
