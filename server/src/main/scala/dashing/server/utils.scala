@@ -16,6 +16,7 @@ import org.http4s.Uri
 import scalaj.http.HttpResponse
 
 import scala.concurrent.duration.FiniteDuration
+import scala.reflect.ClassTag
 import scala.util.Try
 
 import model._
@@ -145,6 +146,19 @@ object utils {
           case Right(va) => c.insert(k, va)
           case _ => Sync[F].pure(())
         }
+      } yield value
+    }
+  } yield res
+
+  def lookupOrInsert[F[_]: Sync : Clock, K, PI <: PageInfo: ClassTag](
+    c: Cache[F, K, PageInfo]
+  )(k: K, v: F[PI]): F[PI] = for {
+    cached <- c.lookup(k)
+    res <- cached match {
+      case Some(value: PI) => Sync[F].pure(value)
+      case _ => for {
+        value <- v
+        _ <- c.insert(k, value)
       } yield value
     }
   } yield res
