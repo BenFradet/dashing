@@ -157,5 +157,14 @@ class ModelSpec extends org.specs2.mutable.Specification with Matchers {
         }
       }""").isRight must beTrue
     }
+    "provide a decoder for RepositoryAndStars" in {
+      decode[RepositoryAndStars]("""
+      {
+        "name": "igwp",
+        "stargazers": {
+          "totalCount": 1
+        }
+      }""").isRight must beTrue
+    }
   }
 }
