@@ -1,9 +1,11 @@
 package dashing.server
 
 import cats.kernel.laws.discipline.MonoidTests
+import io.circe.parser._
 import org.typelevel.discipline.specs2.Discipline
 import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.Specification
+import org.specs2.matcher._
 
 import model._
 
@@ -75,4 +77,29 @@ object OrgRepositoriesInfoLawSpec {
     endCursor <- Gen.alphaStr
     hasNextPage <- Gen.oneOf(true, false)
   } yield OrgRepositoriesInfo(repositoriesAndStars, endCursor, hasNextPage))
+}
+
+class ModelSpec extends org.specs2.mutable.Specification with Matchers {
+  "model" should {
+    "provide a decoder for StarsInfo" in {
+      decode[StarsInfo]("""
+      {
+        "data": {
+          "repository": {
+            "stargazers": {
+              "edges": [
+                {
+                  "starredAt": "2018-09-24T17:54:55Z"
+                }
+              ],
+              "pageInfo": {
+                "endCursor": "Y3Vyc29yOnYyOpIAzghSYkc=",
+                "hasNextPage": false
+              }
+            }
+          }
+        }
+      }""").isRight must beTrue
+    }
+  }
 }
