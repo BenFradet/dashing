@@ -112,5 +112,30 @@ class ModelSpec extends org.specs2.mutable.Specification with Matchers {
         }
       }""").isRight must beTrue
     }
+    "provide a decoder for PullRequestsInfo" in {
+      decode[PullRequestsInfo]("""
+      {
+        "data": {
+          "repository": {
+            "pullRequests": {
+              "edges": [
+                {
+                  "node": {
+                    "author": {
+                      "login": "BenFradet"
+                    },
+                    "createdAt": "2016-11-28T20:41:21Z"
+                  }
+                }
+              ],
+              "pageInfo": {
+                "endCursor": "Y3Vyc29yOnYyOpHOBbJSng==",
+                "hasNextPage": false
+              }
+            }
+          }
+        }
+      }""").isRight must beTrue
+    }
   }
 }
