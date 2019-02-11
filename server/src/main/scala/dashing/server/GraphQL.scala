@@ -3,7 +3,6 @@ package dashing.server
 import cats.Monoid
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import cats.syntax.option._
 import cats.effect.Sync
 import fs2.{Chunk, Pull}
 import io.circe.Decoder
@@ -94,7 +93,7 @@ object GraphQL {
     first <- call(Pagination(100, None))
     rest <-
       if (first.hasNextPage)
-        autoPaginate(Pagination(100, first.endCursor.some))(call).stream.compile.toList
+        autoPaginate(Pagination(100, first.endCursor))(call).stream.compile.toList
       else
         Sync[F].pure(Nil)
   } yield first :: rest
@@ -108,7 +107,7 @@ object GraphQL {
         Pull.eval(call(pagination)).flatMap { pageInfoLike =>
           Pull.output(Chunk(pageInfoLike)) >> (
             if (pageInfoLike.hasNextPage)
-              autoPaginate(pagination.copy(cursor = Some(pageInfoLike.endCursor)))(call)
+              autoPaginate(pagination.copy(cursor = pageInfoLike.endCursor))(call)
             else
               Pull.done
           )

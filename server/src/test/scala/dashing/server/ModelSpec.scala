@@ -29,7 +29,7 @@ object StarsInfoLawSpec {
   implicit def arbStarsInfo: Arbitrary[StarsInfo] = Arbitrary(for {
     timestamp <- Gen.alphaStr
     timeline <- Gen.listOf(timestamp)
-    endCursor <- Gen.alphaStr
+    endCursor <- Gen.option(Gen.alphaStr)
     hasNextPage <- Gen.oneOf(true, false)
   } yield StarsInfo(timeline, endCursor, hasNextPage))
 }
@@ -45,7 +45,7 @@ object PullRequestsInfoLawSpec {
     authorAndTimestamp <- Gen.zip(author, timestamp)
       .map { case (author, timestamp) => AuthorAndTimestamp(author, timestamp) }
     pullRequests <- Gen.listOf(authorAndTimestamp)
-    endCursor <- Gen.alphaStr
+    endCursor <- Gen.option(Gen.alphaStr)
     hasNextPage <- Gen.oneOf(true, false)
   } yield PullRequestsInfo(pullRequests, endCursor, hasNextPage))
 }
@@ -58,7 +58,7 @@ object OrgMembersInfoLawSpec {
   implicit def arbOrgMembersInfo: Arbitrary[OrgMembersInfo] = Arbitrary(for {
     member <- Gen.alphaStr
     members <- Gen.listOf(member)
-    endCursor <- Gen.alphaStr
+    endCursor <- Gen.option(Gen.alphaStr)
     hasNextPage <- Gen.oneOf(true, false)
   } yield OrgMembersInfo(members, endCursor, hasNextPage))
 }
@@ -74,7 +74,7 @@ object OrgRepositoriesInfoLawSpec {
     repositoryAndStars <- Gen.zip(repository, stars)
       .map { case(repository, stars) => RepositoryAndStars(repository, stars) }
     repositoriesAndStars <- Gen.listOf(repositoryAndStars)
-    endCursor <- Gen.alphaStr
+    endCursor <- Gen.option(Gen.alphaStr)
     hasNextPage <- Gen.oneOf(true, false)
   } yield OrgRepositoriesInfo(repositoriesAndStars, endCursor, hasNextPage))
 }

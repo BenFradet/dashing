@@ -51,13 +51,13 @@ object model {
   final case class Repos(repos: List[Repo])
 
   sealed trait PageInfo {
-    def endCursor: String
+    def endCursor: Option[String]
     def hasNextPage: Boolean
   }
 
   final case class StarsInfo(
     starsTimeline: List[String],
-    endCursor: String,
+    endCursor: Option[String],
     hasNextPage: Boolean
   ) extends PageInfo
   object StarsInfo {
@@ -66,7 +66,7 @@ object model {
         rawStars <- c.get[List[Map[String, String]]]("edges")
         starsTimeline = rawStars.map(_.values).flatten
         pageInfoCursor = c.downField("pageInfo")
-        endCursor <- pageInfoCursor.get[String]("endCursor")
+        endCursor <- pageInfoCursor.get[Option[String]]("endCursor")
         hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
       } yield StarsInfo(starsTimeline, endCursor, hasNextPage)
     }.prepare(_.downField("data").downField("repository").downField("stargazers"))
@@ -78,7 +78,7 @@ object model {
           s1.endCursor |+| s2.endCursor,
           s1.hasNextPage && s2.hasNextPage
         )
-      def empty: StarsInfo = StarsInfo(List.empty, "", true)
+      def empty: StarsInfo = StarsInfo(List.empty, None, true)
     }
   }
 
@@ -96,7 +96,7 @@ object model {
   }
   final case class PullRequestsInfo(
     pullRequests: List[AuthorAndTimestamp],
-    endCursor: String,
+    endCursor: Option[String],
     hasNextPage: Boolean
   ) extends PageInfo
   object PullRequestsInfo {
@@ -104,7 +104,7 @@ object model {
       for {
         prs <- c.get[List[AuthorAndTimestamp]]("edges")
         pageInfoCursor = c.downField("pageInfo")
-        endCursor <- pageInfoCursor.get[String]("endCursor")
+        endCursor <- pageInfoCursor.get[Option[String]]("endCursor")
         hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
       } yield PullRequestsInfo(prs, endCursor, hasNextPage)
     }.prepare(_.downField("data").downField("repository").downField("pullRequests"))
@@ -116,13 +116,13 @@ object model {
           p1.endCursor |+| p2.endCursor,
           p1.hasNextPage && p2.hasNextPage
         )
-      def empty: PullRequestsInfo = PullRequestsInfo(List.empty, "", true)
+      def empty: PullRequestsInfo = PullRequestsInfo(List.empty, None, true)
     }
   }
 
   final case class OrgMembersInfo(
     members: List[String],
-    endCursor: String,
+    endCursor: Option[String],
     hasNextPage: Boolean
   ) extends PageInfo
   object OrgMembersInfo {
@@ -131,7 +131,7 @@ object model {
         rawMembers <- c.get[List[Map[String, String]]]("nodes")
         members = rawMembers.map(_.values).flatten
         pageInfoCursor = c.downField("pageInfo")
-        endCursor <- pageInfoCursor.get[String]("endCursor")
+        endCursor <- pageInfoCursor.get[Option[String]]("endCursor")
         hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
       } yield OrgMembersInfo(members, endCursor, hasNextPage)
     }.prepare(_.downField("data").downField("organization").downField("membersWithRole"))
@@ -143,7 +143,7 @@ object model {
           o1.endCursor |+| o2.endCursor,
           o1.hasNextPage && o2.hasNextPage
         )
-      def empty: OrgMembersInfo = OrgMembersInfo(List.empty, "", true)
+      def empty: OrgMembersInfo = OrgMembersInfo(List.empty, None, true)
     }
   }
 
@@ -161,7 +161,7 @@ object model {
   }
   final case class OrgRepositoriesInfo(
     repositoriesAndStars: List[RepositoryAndStars],
-    endCursor: String,
+    endCursor: Option[String],
     hasNextPage: Boolean
   ) extends PageInfo
   object OrgRepositoriesInfo {
@@ -169,7 +169,7 @@ object model {
       for {
         repositoriesAndStars <- c.get[List[RepositoryAndStars]]("nodes")
         pageInfoCursor = c.downField("pageInfo")
-        endCursor <- pageInfoCursor.get[String]("endCursor")
+        endCursor <- pageInfoCursor.get[Option[String]]("endCursor")
         hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
       } yield OrgRepositoriesInfo(repositoriesAndStars, endCursor, hasNextPage)
     }.prepare(_.downField("data").downField("organization").downField("repositories"))
@@ -184,7 +184,7 @@ object model {
             o1.endCursor |+| o2.endCursor,
             o1.hasNextPage && o2.hasNextPage
           )
-        def empty: OrgRepositoriesInfo = OrgRepositoriesInfo(List.empty, "", true)
+        def empty: OrgRepositoriesInfo = OrgRepositoriesInfo(List.empty, None, true)
       }
   }
 }

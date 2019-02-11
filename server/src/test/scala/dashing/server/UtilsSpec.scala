@@ -188,7 +188,7 @@ class UtilsSpec extends Specification with Http4sMatchers[IO] with IOMatchers {
     implicit val testTimer: Timer[IO] = ctx.timer[IO]
     "insert a value if it's not in a cache" in {
       val key = "s"
-      val prsInfo = PullRequestsInfo(List.empty, "", true)
+      val prsInfo = PullRequestsInfo(List.empty, None, true)
       val setup = for {
         cache <- Cache.createCache[IO, String, PageInfo](TimeSpec.unsafeFromDuration(1.second).some)
         v1 <- utils.lookupOrInsert(cache)(key, IO.pure(prsInfo))
@@ -198,7 +198,7 @@ class UtilsSpec extends Specification with Http4sMatchers[IO] with IOMatchers {
     }
     "lookup a value if it's in a cache" in {
       val key = "s"
-      val prsInfo = PullRequestsInfo(List.empty, "", true)
+      val prsInfo = PullRequestsInfo(List.empty, None, true)
       val setup = for {
         cache <- Cache.createCache[IO, String, PageInfo](TimeSpec.unsafeFromDuration(1.second).some)
         _ <- cache.insert(key, prsInfo)

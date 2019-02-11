@@ -24,8 +24,8 @@ class PullRequestsRoutes2[F[_]: Effect: Timer] extends Http4sDsl[F] {
       case GET -> Root / "prs-monthly-2" => for {
         prs <-
           getMonthlyPRs(cache, graphQL, config.orgs, config.lookback, config.peopleToIgnore.toSet)
-          .map(_.asJson.noSpaces)
-          .attempt
+            .map(_.asJson.noSpaces)
+            .attempt
         res <- prs.fold(ex => InternalServerError(ex.getMessage), j => Ok(j))
       } yield res
     }
@@ -57,5 +57,5 @@ object PullRequestsRoutes2 {
     allPRs = Monoid.combineAll(prs)
     filteredPRs = allPRs.pullRequests.filterNot(pr =>
       members.members.toSet.contains(pr.author) || peopleToIgnore.contains(pr.author))
-  } yield PullRequestsInfo(filteredPRs, "", false)
+  } yield PullRequestsInfo(filteredPRs, None, false)
 }
