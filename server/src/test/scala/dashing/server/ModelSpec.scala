@@ -40,7 +40,7 @@ class PullRequestsInfoLawSpec extends Specification with Discipline { def is = {
 } }
 object PullRequestsInfoLawSpec {
   implicit def arbPullRequestsInfo: Arbitrary[PullRequestsInfo] = Arbitrary(for {
-    author <- Gen.alphaStr
+    author <- Gen.option(Gen.alphaStr)
     timestamp <- Gen.alphaStr
     authorAndTimestamp <- Gen.zip(author, timestamp)
       .map { case (author, timestamp) => AuthorAndTimestamp(author, timestamp) }
@@ -108,6 +108,14 @@ class ModelSpec extends org.specs2.mutable.Specification with Matchers {
           "author": {
             "login": "BenFradet"
           },
+          "createdAt": "2016-11-28T20:41:21Z"
+        }
+      }""").isRight must beTrue
+
+      decode[AuthorAndTimestamp]("""
+      {
+        "node": {
+          "author": null,
           "createdAt": "2016-11-28T20:41:21Z"
         }
       }""").isRight must beTrue

@@ -83,15 +83,17 @@ object model {
   }
 
   final case class AuthorAndTimestamp(
-    author: String,
+    author: Option[String],
     timestamp: String
   )
   object AuthorAndTimestamp {
+    final case class Author(login: String)
+    import io.circe.generic.auto._
     implicit val decoder: Decoder[AuthorAndTimestamp] = Decoder.instance { c =>
       for {
-        author <- c.downField("author").get[String]("login")
+        author <- c.get[Option[Author]]("author")
         timestamp <- c.get[String]("createdAt")
-      } yield AuthorAndTimestamp(author, timestamp)
+      } yield AuthorAndTimestamp(author.map(_.login), timestamp)
     }.prepare(_.downField("node"))
   }
   final case class PullRequestsInfo(

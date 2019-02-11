@@ -55,7 +55,10 @@ object PullRequestsRoutes2 {
     prs <- repos.repositoriesAndStars.traverse(rs => graphQL.getPRs(org, rs.repository))
     members <- utils.lookupOrInsert(cache)(s"members-$org", graphQL.getOrgMembers(org))
     allPRs = Monoid.combineAll(prs)
-    filteredPRs = allPRs.pullRequests.filterNot(pr =>
-      members.members.toSet.contains(pr.author) || peopleToIgnore.contains(pr.author))
+    filteredPRs = allPRs.pullRequests.filterNot { pr =>
+      pr.author
+        .map(a => members.members.toSet.contains(a) || peopleToIgnore.contains(a))
+        .getOrElse(false)
+    }
   } yield PullRequestsInfo(filteredPRs, None, false)
 }
