@@ -1,119 +1,85 @@
 package dashing.server
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.FiniteDuration
 
-import cats.data.EitherT
-import cats.effect.{Effect, Sync, Timer}
+import cats.Monoid
+import cats.effect.{Clock, Effect, Sync, Timer}
 import cats.implicits._
-import github4s.Github
-import github4s.Github._
-import github4s.GithubResponses._
-import github4s.free.domain._
-import github4s.cats.effect.jvm.Implicits._
 import io.chrisdavenport.mules.Cache
 import io.circe.syntax._
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
-import scalaj.http.HttpResponse
 
-import model.{GHObject, PRDashboardsConfig}
+import model._
 
 class PullRequestsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
   import PullRequestsRoutes._
 
   def routes(
-    cache: Cache[F, String, String],
-    token: String,
+    cache: Cache[F, String, PageInfo],
+    graphQL: GraphQL[F],
     config: PRDashboardsConfig,
   ): HttpRoutes[F] =
     HttpRoutes.of[F] {
-      case GET -> Root / "prs-quarterly" => for {
-        prs <- utils.lookupOrInsert(cache)("prs-quarterly",
-          getPRsForOrgs(Github(Some(token)), config.orgs,
-            getQuarterlyPRs(_, _, config.lookback, config.peopleToIgnore.toSet))
-              .value.map(_.map(_.asJson.noSpaces)))
-        res <- prs.fold(ex => NotFound(ex.getMessage), t => Ok(t))
-      } yield res
       case GET -> Root / "prs-monthly" => for {
-        prs <- utils.lookupOrInsert(cache)("prs-monthly",
-          getPRsForOrgs(Github(Some(token)), config.orgs,
-            getMonthlyPRs(_, _, config.lookback, config.peopleToIgnore.toSet))
-              .value.map(_.map(_.asJson.noSpaces)))
-        res <- prs.fold(ex => NotFound(ex.getMessage), t => Ok(t))
+        prs <-
+          getMonthlyPRs(cache, graphQL, config.orgs, config.lookback, config.peopleToIgnore.toSet)
+            .map(_.asJson.noSpaces)
+            .attempt
+        res <- prs.fold(ex => InternalServerError(ex.getMessage), j => Ok(j))
+      } yield res
+      case GET -> Root / "prs-quarterly" => for {
+        prs <-
+          getQuarterlyPRs(cache, graphQL, config.orgs, config.lookback, config.peopleToIgnore.toSet)
+            .map(_.asJson.noSpaces)
+            .attempt
+        res <- prs.fold(ex => InternalServerError(ex.getMessage), j => Ok(j))
       } yield res
     }
 }
 
 object PullRequestsRoutes {
-
-  def getPRsForOrgs[F[_]: Sync](
-    gh: Github,
+  def getMonthlyPRs[F[_]: Sync: Clock](
+    cache: Cache[F, String, PageInfo],
+    graphQL: GraphQL[F],
     orgs: List[String],
-    byOrg: (Github, String) => EitherT[F, GHException, Map[String, Double]]
-  ): EitherT[F, GHException, Map[String, Map[String, Double]]] =
-    orgs.map(o => (EitherT.rightT[F, GHException](o), byOrg(gh, o)).tupled)
-      .sequence
-      .map(_.toMap)
-
-  def getMonthlyPRs[F[_]: Sync](
-    gh: Github,
-    org: String,
     lookback: FiniteDuration,
     peopleToIgnore: Set[String],
-  ): EitherT[F, GHException, Map[String, Double]] = for {
-    prs <- getPRs(gh, org, peopleToIgnore)
-    monthlyPRs = utils.computeMonthlyTimeline(prs.map(_.created.take(7)), lookback)
-  } yield monthlyPRs
+  ): F[Map[String, Map[String, Double]]] = orgs.traverse { org =>
+    for {
+      prs <- utils.lookupOrInsert(cache)(s"prs-$org", getPRs(cache, graphQL, org, peopleToIgnore))
+      monthlyPRs = utils.computeMonthlyTimeline(prs.pullRequests.map(_.timestamp.take(7)), lookback)
+    } yield org -> monthlyPRs
+  }.map(_.toMap)
 
-  def getQuarterlyPRs[F[_]: Sync](
-    gh: Github,
-    org: String,
+  def getQuarterlyPRs[F[_]: Sync: Clock](
+    cache: Cache[F, String, PageInfo],
+    graphQL: GraphQL[F],
+    orgs: List[String],
     lookback: FiniteDuration,
     peopleToIgnore: Set[String],
-  ): EitherT[F, GHException, Map[String, Double]] =
+  ): F[Map[String, Map[String, Double]]] = orgs.traverse { org =>
     for {
-      prs <- getPRs(gh, org, peopleToIgnore)
-      quarterlyPRs = utils.computeQuarterlyTimeline(prs.map(_.created.take(7)), lookback)
-    } yield quarterlyPRs
+      prs <- utils.lookupOrInsert(cache)(s"prs-$org", getPRs(cache, graphQL, org, peopleToIgnore))
+      monthlyPRs = utils
+        .computeQuarterlyTimeline(prs.pullRequests.map(_.timestamp.take(7)), lookback)
+    } yield org -> monthlyPRs
+  }.map(_.toMap)
 
-  def getPRs[F[_]: Sync](
-    gh: Github,
+  def getPRs[F[_]: Sync: Clock](
+    cache: Cache[F, String, PageInfo],
+    graphQL: GraphQL[F],
     org: String,
     peopleToIgnore: Set[String],
-  ): EitherT[F, GHException, List[GHObject]] = for {
-    repos <- utils.getRepos[F](gh, org)
-    repoNames = repos.map(_.name)
-    prs <- getPRs(gh, org, repoNames)
-    members <- utils.getOrgMembers[F](gh, org)
-    prsByNonMember = prs.filterNot(pr =>
-      members.toSet.contains(pr.author) || peopleToIgnore.toSet.contains(pr.author))
-  } yield prsByNonMember
-
-  def getPRs[F[_]: Sync](
-    gh: Github,
-    org: String,
-    repoNames: List[String]
-  ): EitherT[F, GHException, List[GHObject]] = for {
-    nested <- repoNames.traverse(getPRs(gh, org, _))
-    flattened = nested.flatten
-  } yield flattened
-
-  def getPRs[F[_]: Sync](
-      gh: Github, org: String, repoName: String): EitherT[F, GHException, List[GHObject]] =
-    for {
-      prs <- utils.autoPaginate(p => listPRs(gh, org, repoName, Some(p)))
-      pullRequests = prs
-        .map(pr => (pr.user.map(_.login), pr.created_at.some).bisequence)
-        .flatten
-        .map(pr => GHObject(pr._1, pr._2))
-    } yield pullRequests
-
-  def listPRs[F[_]: Sync](
-    gh: Github,
-    org: String,
-    repoName: String,
-    page: Option[Pagination]
-  ): F[Either[GHException, GHResult[List[PullRequest]]]] =
-    gh.pullRequests.list(org, repoName, List(PRFilterAll), page)
-      .exec[F, HttpResponse[String]]()
+  ): F[PullRequestsInfo] = for {
+    repos <- utils.lookupOrInsert(cache)(s"repos-$org", graphQL.getOrgRepositories(org))
+    prs <- repos.repositoriesAndStars.traverse(rs => graphQL.getPRs(org, rs.repository))
+    members <- utils.lookupOrInsert(cache)(s"members-$org", graphQL.getOrgMembers(org))
+    allPRs = Monoid.combineAll(prs)
+    filteredPRs = allPRs.pullRequests.filterNot { pr =>
+      pr.author
+        .map(a => members.members.toSet.contains(a) || peopleToIgnore.contains(a))
+        .getOrElse(false)
+    }
+  } yield PullRequestsInfo(filteredPRs, None, false)
 }

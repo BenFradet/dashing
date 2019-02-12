@@ -40,8 +40,7 @@ object ServerStream {
           graphQL = new GraphQL(client, c.ghToken)
           apiService =
             new StarsRoutes[F].routes(cache, c.ghToken, c.starDashboards) <+>
-            new PullRequestsRoutes[F]().routes(cache, c.ghToken, c.prDashboards) <+>
-            new PullRequestsRoutes2[F]().routes(piCache, graphQL, c.prDashboards)
+            new PullRequestsRoutes[F]().routes(piCache, graphQL, c.prDashboards)
           httpApp = Router(
             "/" -> new RenderingRoutes[F](ec).routes,
             "/api" -> apiService
