@@ -3,7 +3,7 @@ package server
 
 import cats.Monoid
 import cats.data.EitherT
-import cats.effect.{Effect, Sync, Timer}
+import cats.effect.{Clock, Effect, Sync, Timer}
 import cats.implicits._
 import github4s.Github
 import github4s.Github._
@@ -17,7 +17,7 @@ import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import scalaj.http.HttpResponse
 
-import model.{StarDashboardsConfig, Repo, Repos}
+import model._
 
 class StarsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
   import StarsRoutes._
@@ -45,6 +45,30 @@ class StarsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
 }
 
 object StarsRoutes {
+  def getTopN[F[_]: Sync: Clock](
+    cache: Cache[F, String, PageInfo],
+    graphQL: GraphQL[F],
+    org: String,
+    n: Int,
+    heroRepo: String,
+    minStarsThreshold: Int
+  ): F[List[StarsInfo]] = for {
+    rs <- utils.lookupOrInsert(cache)(s"repos-$org", graphQL.getOrgRepositories(org))
+    repos = rs.repositoriesAndStars
+      .filter(_.firstHundredStars >= minStarsThreshold)
+      .map(_.repository)
+      .filter(_ != heroRepo)
+    stars <- repos.traverse { r =>
+      utils.lookupOrInsert(cache)(s"stars-$org-$r", graphQL.listStargazers(org, r))
+    }
+    sorted = stars.sortBy(-_.starsCount)
+    topN = sorted.take(n)
+    othersCombined = Monoid.combineAll(sorted.drop(n))
+    others = othersCombined.copy(
+      repository = "others",
+      starsTimeline = othersCombined.starsTimeline.sorted.dropRight(1)
+    )
+  } yield others :: topN
 
   def getTopN[F[_]: Sync](
     gh: Github,
