@@ -73,7 +73,9 @@ object PullRequestsRoutes {
     peopleToIgnore: Set[String],
   ): F[PullRequestsInfo] = for {
     repos <- utils.lookupOrInsert(cache)(s"repos-$org", graphQL.getOrgRepositories(org))
-    prs <- repos.repositoriesAndStars.traverse(rs => graphQL.getPRs(org, rs.repository))
+    prs <- repos.repositoriesAndStars.traverse { rs =>
+      utils.lookupOrInsert(cache)(s"prs-$org-${rs.repository}", graphQL.getPRs(org, rs.repository))
+    }
     members <- utils.lookupOrInsert(cache)(s"members-$org", graphQL.getOrgMembers(org))
     allPRs = Monoid.combineAll(prs)
     filteredPRs = allPRs.pullRequests.filterNot { pr =>
