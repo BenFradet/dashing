@@ -56,29 +56,35 @@ object model {
   }
 
   final case class StarsInfo(
+    repository: String,
     starsTimeline: List[String],
+    starsCount: Int,
     endCursor: Option[String],
     hasNextPage: Boolean
   ) extends PageInfo
   object StarsInfo {
     implicit val decoder: Decoder[StarsInfo] = Decoder.instance { c =>
       for {
-        rawStars <- c.get[List[Map[String, String]]]("edges")
+        name <- c.get[String]("name")
+        stargazersCursor = c.downField("stargazers")
+        rawStars <- stargazersCursor.get[List[Map[String, String]]]("edges")
         starsTimeline = rawStars.map(_.values).flatten
-        pageInfoCursor = c.downField("pageInfo")
+        pageInfoCursor = stargazersCursor.downField("pageInfo")
         endCursor <- pageInfoCursor.get[Option[String]]("endCursor")
         hasNextPage <- pageInfoCursor.get[Boolean]("hasNextPage")
-      } yield StarsInfo(starsTimeline, endCursor, hasNextPage)
-    }.prepare(_.downField("data").downField("repository").downField("stargazers"))
+      } yield StarsInfo(name, starsTimeline, starsTimeline.length, endCursor, hasNextPage)
+    }.prepare(_.downField("data").downField("repository"))
     implicit val starsInfoEq: Eq[StarsInfo] = Eq.fromUniversalEquals
     implicit val starsInfoMonoid: Monoid[StarsInfo] = new Monoid[StarsInfo] {
       def combine(s1: StarsInfo, s2: StarsInfo): StarsInfo =
         StarsInfo(
+          s1.repository |+| s2.repository,
           s1.starsTimeline |+| s2.starsTimeline,
+          s1.starsCount |+| s2.starsCount,
           s1.endCursor |+| s2.endCursor,
           s1.hasNextPage && s2.hasNextPage
         )
-      def empty: StarsInfo = StarsInfo(List.empty, None, true)
+      def empty: StarsInfo = StarsInfo("", List.empty, 0, None, true)
     }
   }
 
