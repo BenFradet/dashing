@@ -71,7 +71,6 @@ dockerExposedVolumes := Seq("/dashing/config")
 maintainer in Docker := "Ben Fradet <https://github.com/BenFradet>"
 
 lazy val http4sVersion = "0.20.0-M5"
-lazy val github4sVersion = "0.20.0"
 lazy val circeVersion = "0.11.1"
 lazy val circeConfigVersion = "0.6.1"
 lazy val scalatagsVersion = "0.6.7"
@@ -90,9 +89,6 @@ lazy val server = project.in(file("server"))
       "org.http4s" %% "http4s-blaze-client",
       "org.http4s" %% "http4s-circe",
     ).map(_ % http4sVersion) ++ Seq(
-      "com.47deg" %% "github4s",
-      "com.47deg" %% "github4s-cats-effect",
-    ).map(_ % github4sVersion) ++ Seq(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
     ).map(_ % circeVersion) ++ Seq(
