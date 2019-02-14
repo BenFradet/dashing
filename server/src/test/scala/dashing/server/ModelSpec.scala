@@ -27,13 +27,11 @@ class StarsInfoLawSpec extends Specification with Discipline { def is = {
 } }
 object StarsInfoLawSpec {
   implicit def arbStarsInfo: Arbitrary[StarsInfo] = Arbitrary(for {
-    repository <- Gen.alphaStr
-    count <- Gen.chooseNum(1, 1000)
     timestamp <- Gen.alphaStr
     timeline <- Gen.listOf(timestamp)
     endCursor <- Gen.option(Gen.alphaStr)
     hasNextPage <- Gen.oneOf(true, false)
-  } yield StarsInfo(repository, timeline, count, endCursor, hasNextPage))
+  } yield StarsInfo(timeline, endCursor, hasNextPage))
 }
 
 class PullRequestsInfoLawSpec extends Specification with Discipline { def is = {
@@ -88,7 +86,6 @@ class ModelSpec extends org.specs2.mutable.Specification with Matchers {
       {
         "data": {
           "repository": {
-            "name": "igwp",
             "stargazers": {
               "edges": [
                 {
