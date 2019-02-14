@@ -2,20 +2,13 @@ package dashing
 package server
 
 import cats.Monoid
-import cats.data.EitherT
 import cats.effect.{Clock, Effect, Sync, Timer}
 import cats.implicits._
-import github4s.Github
-import github4s.Github._
-import github4s.GithubResponses._
-import github4s.free.domain._
-import github4s.cats.effect.jvm.Implicits._
 import io.chrisdavenport.mules.Cache
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
-import scalaj.http.HttpResponse
 
 import model._
 
@@ -23,25 +16,24 @@ class StarsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
   import StarsRoutes._
 
   def routes(
-    cache: Cache[F, String, String],
-    token: String,
+    cache: Cache[F, String, PageInfo],
+    graphQL: GraphQL[F],
     config: StarDashboardsConfig
-  ): HttpRoutes[F] = {
-    val gh = Github(Some(token))
+  ): HttpRoutes[F] =
     HttpRoutes.of[F] {
       case GET -> Root / "stars" / "top-n" => for {
-        topN <- utils.lookupOrInsert(cache)("top-n",
-          getTopN(gh, config.org, config.topNRepos, config.heroRepo)
-            .value.map(_.map(_.repos.asJson.noSpaces)))
+        topN <- getTopN(cache, graphQL, config.org, config.topNRepos, config.heroRepo)
+          .map(_.repos.asJson.noSpaces)
+          .attempt
         res <- topN.fold(ex => NotFound(ex.getMessage), l => Ok(l))
       } yield res
       case GET -> Root / "stars" / "hero-repo" => for {
-        stars <- utils.lookupOrInsert(cache)("hero-repo",
-          getStars(gh, config.org, config.heroRepo).value.map(_.map(_.asJson.noSpaces)))
-        res <- stars.fold(ex => NotFound(ex.getMessage), r => Ok(r))
+        heroRepo <- getStars(cache, graphQL, config.org, config.heroRepo)
+          .map(_.asJson.noSpaces)
+          .attempt
+        res <- heroRepo.fold(ex => NotFound(ex.getMessage), h => Ok(h))
       } yield res
     }
-  }
 }
 
 object StarsRoutes {
@@ -51,39 +43,17 @@ object StarsRoutes {
     org: String,
     n: Int,
     heroRepo: String,
-    minStarsThreshold: Int
-  ): F[List[StarsInfo]] = for {
+    minStarsThreshold: Int = 10
+  ): F[Repos] = for {
     rs <- utils.lookupOrInsert(cache)(s"repos-$org", graphQL.getOrgRepositories(org))
     repos = rs.repositoriesAndStars
       .filter(_.firstHundredStars >= minStarsThreshold)
       .map(_.repository)
       .filter(_ != heroRepo)
     stars <- repos.traverse { r =>
-      utils.lookupOrInsert(cache)(s"stars-$org-$r", graphQL.listStargazers(org, r))
+      getStars(cache, graphQL, org, r)
     }
-    sorted = stars.sortBy(-_.starsCount)
-    topN = sorted.take(n)
-    othersCombined = Monoid.combineAll(sorted.drop(n))
-    others = othersCombined.copy(
-      repository = "others",
-      starsTimeline = othersCombined.starsTimeline.sorted.dropRight(1)
-    )
-  } yield others :: topN
-
-  def getTopN[F[_]: Sync](
-    gh: Github,
-    org: String,
-    n: Int,
-    heroRepo: String,
-    minStarsThreshold: Int = 10
-  ): EitherT[F, GHException, Repos] = for {
-    rs <- utils.getRepos[F](gh, org)
-    repos = rs
-      .filter(_.status.stargazers_count >= minStarsThreshold)
-      .map(_.name)
-      .filter(_ != heroRepo)
-    stars <- getStars(gh, org, repos)
-    sorted = stars.repos.sortBy(-_.stars)
+    sorted = stars.sortBy(-_.stars)
     topN = sorted.take(n)
     othersCombined = Monoid.combineAll(sorted.drop(n))
     others = othersCombined.copy(
@@ -92,26 +62,16 @@ object StarsRoutes {
     )
   } yield Repos(others :: topN)
 
-  def getStars[F[_]: Sync](
-    gh: Github,
+  def getStars[F[_]: Sync : Clock](
+    cache: Cache[F, String, PageInfo],
+    graphQL: GraphQL[F],
     org: String,
-    repoNames: List[String]
-  ): EitherT[F, GHException, Repos] =
-    repoNames.traverse(r => getStars(gh, org, r)).map(Repos.apply)
-
-  def getStars[F[_]: Sync](
-      gh: Github, org: String, repoName: String): EitherT[F, GHException, Repo] = for {
-    stargazers <- utils.autoPaginate(p => listStargazers(gh, org, repoName, Some(p)))
+    repoName: String
+  ): F[Repo] = for {
+    stargazers <-
+      utils.lookupOrInsert(cache)(s"stars-$org-$repoName", graphQL.listStargazers(org, repoName))
     // we keep only yyyy-mm
-    starTimestamps = stargazers.map(_.starred_at).flatten.map(_.take(7))
+    starTimestamps = stargazers.starsTimeline.map(_.take(7))
     timeline = utils.computeCumulativeMonthlyTimeline(starTimestamps)
   } yield Repo(repoName, timeline._1, timeline._2)
-
-  def listStargazers[F[_]: Sync](
-    gh: Github,
-    org: String,
-    repoName: String,
-    page: Option[Pagination]
-  ): F[Either[GHException, GHResult[List[Stargazer]]]] =
-    gh.activities.listStargazers(org, repoName, true, page).exec[F, HttpResponse[String]]()
 }

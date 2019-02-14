@@ -33,14 +33,12 @@ object ServerStream {
       case Right(c) =>
         for {
           cache <- Stream.eval(
-            Cache.createCache[F, String, String](TimeSpec.fromDuration(c.cacheDuration)))
-          piCache <- Stream.eval(
             Cache.createCache[F, String, PageInfo](TimeSpec.fromDuration(c.cacheDuration)))
           client <- BlazeClientBuilder[F](ec).stream
           graphQL = new GraphQL(client, c.ghToken)
           apiService =
-            new StarsRoutes[F].routes(cache, c.ghToken, c.starDashboards) <+>
-            new PullRequestsRoutes[F]().routes(piCache, graphQL, c.prDashboards)
+            new StarsRoutes[F].routes(cache, graphQL, c.starDashboards) <+>
+            new PullRequestsRoutes[F]().routes(cache, graphQL, c.prDashboards)
           httpApp = Router(
             "/" -> new RenderingRoutes[F](ec).routes,
             "/api" -> apiService
