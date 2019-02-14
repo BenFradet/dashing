@@ -7,7 +7,6 @@ import scala.concurrent.duration._
 import cats.effect.{IO, Timer}
 import cats.effect.laws.util.TestContext
 import cats.syntax.option._
-import github4s.Github
 import io.chrisdavenport.mules.{Cache, TimeSpec}
 import org.http4s.testing.{Http4sMatchers, IOMatchers}
 import org.specs2.mutable.Specification
@@ -16,28 +15,6 @@ import model._
 
 class UtilsSpec extends Specification with Http4sMatchers[IO] with IOMatchers {
   args(skipAll = sys.env.get("GITHUB_ACCESS_TOKEN").isEmpty)
-
-  val gh = Github(sys.env.get("GITHUB_ACCESS_TOKEN"))
-
-  "utils.getRepos" should {
-    "retrieve the list of repos in an org" in {
-      utils.getRepos[IO](gh, "igwp").map(_.size) must returnRight(4)
-    }
-    "be a left if the org doesn't exist" in {
-      utils.getRepos[IO](gh, "notexist")
-        .leftMap(_.getMessage.take(10)) must returnLeft("Failed inv")
-    }
-  }
-
-  "utils.getOrgMembers" should {
-    "retrieve the list of repos in an org" in {
-      utils.getOrgMembers[IO](gh, "igwp").map(_.size) must returnRight(1)
-    }
-    "be a left if the org doesn't exist" in {
-      utils.getOrgMembers[IO](gh, "notexist")
-        .leftMap(_.getMessage.take(10)) must returnLeft("Failed inv")
-    }
-  }
 
   "utils.computeQuarterlyTimeline" should {
     "compute a quarterly count" in {
@@ -151,35 +128,6 @@ class UtilsSpec extends Specification with Http4sMatchers[IO] with IOMatchers {
   "utils.getQuarter" should {
     "provide the Quarter from a YearMonth" in {
       utils.getQuarter(YearMonth.of(2014, 5)) must_== Quarter(2014, 2)
-    }
-  }
-
-  "utils.getNrPages" should {
-    "retrieve the correct number of pages" in {
-      utils.getNrPages(Map("Link" ->
-        Seq("""<http://github.com?per_page=100&page=20>; rel="last""""))) must_== Some(20)
-    }
-    "none if no Link headers" in {
-      utils.getNrPages(Map("H" -> Seq("abc"))) must_== None
-    }
-    "none if the Link head doesn't match the regex" in {
-      utils.getNrPages(Map("Link" ->
-        Seq("""http://github.com?per_page=100&page=20; rel="last""""))) must_== None
-    }
-    "none if there is not last relation" in {
-      utils.getNrPages(Map("Link" ->
-        Seq("""<http://github.com?per_page=100&page=20>; rel="next""""))) must_== None
-    }
-    "none if the link is not a properly formed url" in {
-      utils.getNrPages(Map("Link" -> Seq("""<abc>; rel="last""""))) must_== None
-    }
-    "none if the url doesn't contain a page query param" in {
-      utils.getNrPages(Map("Link" ->
-        Seq("""<http://github.com?per_page=100>; rel="last""""))) must_== None
-    }
-    "none if the page query param is not an int" in {
-      utils.getNrPages(Map("Link" ->
-        Seq("""<http://github.com?per_page=100&page=abc>; rel="last""""))) must_== None
     }
   }
 

@@ -3,17 +3,9 @@ package dashing.server
 import java.time.YearMonth
 import java.time.temporal.IsoFields
 
-import cats.data.EitherT
 import cats.effect.{Clock, Sync}
 import cats.implicits._
-import github4s.Github
-import github4s.Github._
-import github4s.GithubResponses._
-import github4s.free.domain._
-import github4s.cats.effect.jvm.Implicits._
 import io.chrisdavenport.mules.Cache
-import org.http4s.Uri
-import scalaj.http.HttpResponse
 
 import scala.concurrent.duration.FiniteDuration
 import scala.reflect.ClassTag
@@ -22,19 +14,6 @@ import scala.util.Try
 import model._
 
 object utils {
-
-  def getRepos[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, List[Repository]] =
-    autoPaginate { p =>
-      gh.repos.listOrgRepos(org, Some("sources"), Some(p)).exec[F, HttpResponse[String]]()
-    }
-
-  def getOrgMembers[F[_]: Sync](gh: Github, org: String): EitherT[F, GHException, List[String]] =
-    for {
-      ms <- autoPaginate { p =>
-        gh.organizations.listMembers(org, pagination = Some(p)).exec[F, HttpResponse[String]]()
-      }
-      members = ms.map(_.login)
-    } yield members
 
   def computeCumulativeMonthlyTimeline(timeline: List[String]): (Map[String, Double], Int) = (for {
     min <- timeline.minimumOption
@@ -109,47 +88,6 @@ object utils {
       m + (e -> (m.getOrElse(e, 0) + 1))
     }
 
-  def autoPaginate[F[_]: Sync, T](
-    call: Pagination => F[Either[GHException, GHResult[List[T]]]]
-  ): EitherT[F, GHException, List[T]] = for {
-    firstPage <- EitherT(call(Pagination(1, 100)))
-    pages = (utils.getNrPages(firstPage.headers) match {
-      case Some(n) if n >= 2 => (2 to n).toList
-      case _ => Nil
-    }).map(Pagination(_, 100))
-    restPages <- EitherT(pages.traverse(call(_)).map(_.sequence))
-  } yield firstPage.result ++ restPages.map(_.result).flatten
-
-  private final case class Relation(name: String, url: String)
-  def getNrPages(headers: Map[String, Seq[String]]): Option[Int] = for {
-    links <- headers.map { case (k, v) => k.toLowerCase -> v }.get("link")
-    h <- links.headOption
-    relations = h.split(", ").flatMap {
-      case relPattern(url, name) => Some(Relation(name, url))
-      case _ => None
-    }
-    lastRelation <- relations.find(_.name == "last")
-    uri <- Uri.fromString(lastRelation.url).toOption
-    lastPage <- uri.params.get("page")
-    nrPages <- Try(lastPage.toInt).toOption
-  } yield nrPages
-
-  def lookupOrInsert[F[_]: Sync : Clock, K, V, E](
-    c: Cache[F, K, V]
-  )(k: K, v: F[Either[E, V]]): F[Either[E, V]] = for {
-    cached <- c.lookup(k)
-    res <- cached match {
-      case Some(value) => Sync[F].pure(Right(value))
-      case _ => for {
-        value <- v
-        _ <- value match {
-          case Right(va) => c.insert(k, va)
-          case _ => Sync[F].pure(())
-        }
-      } yield value
-    }
-  } yield res
-
   def lookupOrInsert[F[_]: Sync : Clock, K, PI <: PageInfo: ClassTag](
     c: Cache[F, K, PageInfo]
   )(k: K, v: F[PI]): F[PI] = for {
@@ -163,6 +101,4 @@ object utils {
     }
   } yield res
 
-  // fucks up syntax highlighting so at the end of the file
-  private val relPattern = """<(.*?)>; rel="(\w+)"""".r
 }
