@@ -11,8 +11,9 @@ import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 
 import model._
+import Parallel1.parallelFromParallel1
 
-class StarsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
+class StarsRoutes[F[_]: Effect: Timer: Parallel1] extends Http4sDsl[F] {
   import StarsRoutes._
 
   def routes(
@@ -37,7 +38,7 @@ class StarsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
 }
 
 object StarsRoutes {
-  def getTopN[F[_]: Sync: Clock](
+  def getTopN[F[_]: Sync: Clock: Parallel1](
     cache: Cache[F, String, PageInfo],
     graphQL: GraphQL[F],
     org: String,
@@ -50,7 +51,7 @@ object StarsRoutes {
       .filter(_.firstHundredStars >= minStarsThreshold)
       .map(_.repository)
       .filter(_ != heroRepo)
-    stars <- repos.traverse { r =>
+    stars <- repos.parTraverse { r =>
       getStars(cache, graphQL, org, r)
     }
     sorted = stars.sortBy(-_.stars)
