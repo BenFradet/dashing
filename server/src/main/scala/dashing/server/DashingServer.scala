@@ -3,7 +3,7 @@ package dashing.server
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
-import cats.effect.{ConcurrentEffect, ContextShift, ExitCode, IO, IOApp, Timer}
+import cats.effect._
 import cats.implicits._
 import com.typesafe.config.ConfigFactory
 import fs2.Stream
@@ -26,7 +26,7 @@ object DashingServer extends IOApp {
 
 object ServerStream {
 
-  def stream[F[_]: ConcurrentEffect: ContextShift: Timer](
+  def stream[F[_]: ConcurrentEffect: ContextShift: Timer: Parallel1](
     implicit ec: ExecutionContext
   ): Stream[F, ExitCode] =
     ConfigFactory.load().as[DashingConfig] match {
@@ -38,7 +38,7 @@ object ServerStream {
           graphQL = new GraphQL(client, c.ghToken)
           apiService =
             new StarsRoutes[F].routes(cache, graphQL, c.starDashboards) <+>
-            new PullRequestsRoutes[F]().routes(cache, graphQL, c.prDashboards)
+            new PullRequestsRoutes[F].routes(cache, graphQL, c.prDashboards)
           httpApp = Router(
             "/" -> new RenderingRoutes[F](ec).routes,
             "/api" -> apiService

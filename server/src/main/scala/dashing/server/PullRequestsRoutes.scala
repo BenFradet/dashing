@@ -11,8 +11,9 @@ import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 
 import model._
+import Parallel1.parallelFromParallel1
 
-class PullRequestsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
+class PullRequestsRoutes[F[_]: Effect: Timer: Parallel1] extends Http4sDsl[F] {
   import PullRequestsRoutes._
 
   def routes(
@@ -39,26 +40,26 @@ class PullRequestsRoutes[F[_]: Effect: Timer] extends Http4sDsl[F] {
 }
 
 object PullRequestsRoutes {
-  def getMonthlyPRs[F[_]: Sync: Clock](
+  def getMonthlyPRs[F[_]: Sync: Clock: Parallel1](
     cache: Cache[F, String, PageInfo],
     graphQL: GraphQL[F],
     orgs: List[String],
     lookback: FiniteDuration,
     peopleToIgnore: Set[String],
-  ): F[Map[String, Map[String, Double]]] = orgs.traverse { org =>
+  ): F[Map[String, Map[String, Double]]] = orgs.parTraverse { org =>
     for {
       prs <- utils.lookupOrInsert(cache)(s"prs-$org", getPRs(cache, graphQL, org, peopleToIgnore))
       monthlyPRs = utils.computeMonthlyTimeline(prs.pullRequests.map(_.timestamp.take(7)), lookback)
     } yield org -> monthlyPRs
   }.map(_.toMap)
 
-  def getQuarterlyPRs[F[_]: Sync: Clock](
+  def getQuarterlyPRs[F[_]: Sync: Clock: Parallel1](
     cache: Cache[F, String, PageInfo],
     graphQL: GraphQL[F],
     orgs: List[String],
     lookback: FiniteDuration,
     peopleToIgnore: Set[String],
-  ): F[Map[String, Map[String, Double]]] = orgs.traverse { org =>
+  ): F[Map[String, Map[String, Double]]] = orgs.parTraverse { org =>
     for {
       prs <- utils.lookupOrInsert(cache)(s"prs-$org", getPRs(cache, graphQL, org, peopleToIgnore))
       monthlyPRs = utils
@@ -66,14 +67,14 @@ object PullRequestsRoutes {
     } yield org -> monthlyPRs
   }.map(_.toMap)
 
-  def getPRs[F[_]: Sync: Clock](
+  def getPRs[F[_]: Sync: Clock: Parallel1](
     cache: Cache[F, String, PageInfo],
     graphQL: GraphQL[F],
     org: String,
     peopleToIgnore: Set[String],
   ): F[PullRequestsInfo] = for {
     repos <- utils.lookupOrInsert(cache)(s"repos-$org", graphQL.getOrgRepositories(org))
-    prs <- repos.repositoriesAndStars.traverse { rs =>
+    prs <- repos.repositoriesAndStars.parTraverse { rs =>
       utils.lookupOrInsert(cache)(s"prs-$org-${rs.repository}", graphQL.getPRs(org, rs.repository))
     }
     members <- utils.lookupOrInsert(cache)(s"members-$org", graphQL.getOrgMembers(org))
