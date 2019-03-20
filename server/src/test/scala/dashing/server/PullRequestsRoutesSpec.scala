@@ -19,6 +19,7 @@ class PullRequestsRoutesSpec extends Specification with IOMatchers {
 
   implicit val timer = IO.timer(global)
   implicit val cs: ContextShift[IO] = IO.contextShift(global)
+  implicit val c: YearMonthClock[IO] = YearMonthClock.create[IO]
 
   def serve(req: Request[IO]): Response[IO] = (for {
     cache <- MemoryCache.createMemoryCache[IO, String, PageInfo](TimeSpec.fromDuration(12.hours))

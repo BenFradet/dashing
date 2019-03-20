@@ -13,7 +13,9 @@ import org.http4s.dsl.Http4sDsl
 import model._
 import Parallel1.parallelFromParallel1
 
-class PullRequestsRoutes[F[_]: Effect: Timer: Parallel1] extends Http4sDsl[F] {
+class PullRequestsRoutes[F[_]: Effect: Timer: Parallel1](
+  implicit C: YearMonthClock[F]
+) extends Http4sDsl[F] {
   import PullRequestsRoutes._
 
   def routes(
@@ -46,10 +48,11 @@ object PullRequestsRoutes {
     orgs: List[String],
     lookback: FiniteDuration,
     peopleToIgnore: Set[String],
-  ): F[Map[String, Map[String, Double]]] = orgs.parTraverse { org =>
+  )(implicit C: YearMonthClock[F]): F[Map[String, Map[String, Double]]] = orgs.parTraverse { org =>
     for {
       prs <- utils.lookupOrInsert(cache)(s"prs-$org", getPRs(cache, graphQL, org, peopleToIgnore))
-      monthlyPRs = utils.computeMonthlyTimeline(prs.pullRequests.map(_.timestamp.take(7)), lookback)
+      monthlyPRs <- utils.computeMonthlyTimeline[F](
+        prs.pullRequests.map(_.timestamp.take(7)), lookback)
     } yield org -> monthlyPRs
   }.map(_.toMap)
 
@@ -59,11 +62,11 @@ object PullRequestsRoutes {
     orgs: List[String],
     lookback: FiniteDuration,
     peopleToIgnore: Set[String],
-  ): F[Map[String, Map[String, Double]]] = orgs.parTraverse { org =>
+  )(implicit C: YearMonthClock[F]): F[Map[String, Map[String, Double]]] = orgs.parTraverse { org =>
     for {
       prs <- utils.lookupOrInsert(cache)(s"prs-$org", getPRs(cache, graphQL, org, peopleToIgnore))
-      monthlyPRs = utils
-        .computeQuarterlyTimeline(prs.pullRequests.map(_.timestamp.take(7)), lookback)
+      monthlyPRs <- utils
+        .computeQuarterlyTimeline[F](prs.pullRequests.map(_.timestamp.take(7)), lookback)
     } yield org -> monthlyPRs
   }.map(_.toMap)
 

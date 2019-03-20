@@ -3,6 +3,8 @@ package dashing.server
 import java.time.YearMonth
 import java.time.temporal.IsoFields
 
+import cats.Monad
+import cats.data.OptionT
 import cats.effect.{Clock, Sync}
 import cats.implicits._
 import io.chrisdavenport.mules.Cache
@@ -26,35 +28,37 @@ object utils {
     dataPoints = filledTL._1.map(t => t._1 -> t._2.toDouble).toMap
   } yield (dataPoints, filledTL._2)).getOrElse((Map.empty, 0))
 
-  def computeMonthlyTimeline(
+  def computeMonthlyTimeline[F[_]: Monad](
     timeline: List[String],
     lookback: FiniteDuration
-  ): Map[String, Double] = (for {
-    nowYearMonth <- YearMonth.now.some
-    lookbackYearMonth = YearMonth.now.minusMonths(lookback.toDays / 30)
+  )(implicit C: YearMonthClock[F]): F[Map[String, Double]] = (for {
+    nowYearMonth <- OptionT.liftF(C.now)
+    lookbackYearMonth <- OptionT.liftF(C.now).map(_.minusMonths(lookback.toDays / 30))
     successiveMonths = getSuccessiveMonths(lookbackYearMonth, nowYearMonth)
-    yearMonths <- timeline
+    yearMonths = timeline
       .map(ym => Try(YearMonth.parse(ym)).toOption)
       .sequence
-    yearMonthsFiltered = yearMonths.filter(_.compareTo(lookbackYearMonth) >= 0)
-    counts = count(yearMonths)
+    yms <- OptionT.fromOption[F](yearMonths)
+    yearMonthsFiltered = yms.filter(_.compareTo(lookbackYearMonth) >= 0)
+    counts = count(yms)
     filledTL = successiveMonths.map(e => e.toString -> counts.getOrElse(e, 0).toDouble).toMap
-  } yield filledTL).getOrElse(Map.empty)
+  } yield filledTL).value.map(_.getOrElse(Map.empty))
 
-  def computeQuarterlyTimeline(
+  def computeQuarterlyTimeline[F[_]: Monad](
     timeline: List[String],
     lookback: FiniteDuration
-  ): Map[String, Double] = (for {
-    nowYearMonth <- YearMonth.now.some
-    lookbackYearMonth = YearMonth.now.minusMonths(lookback.toDays / 30)
+  )(implicit C: YearMonthClock[F]): F[Map[String, Double]] = (for {
+    nowYearMonth <- OptionT.liftF(C.now)
+    lookbackYearMonth <- OptionT.liftF(C.now).map(_.minusMonths(lookback.toDays / 30))
     successiveQuarters = getSuccessiveQuarters(lookbackYearMonth, nowYearMonth)
-    yearMonths <- timeline
+    yearMonths = timeline
       .map(ym => Try(YearMonth.parse(ym)).toOption)
       .sequence
-    quarters = yearMonths.map(getQuarter)
+    yms <- OptionT.fromOption[F](yearMonths)
+    quarters = yms.map(getQuarter)
     counts = count(quarters)
     filledTL = successiveQuarters.map(e => e.toString -> counts.getOrElse(e, 0).toDouble).toMap
-  } yield filledTL).getOrElse(Map.empty)
+  } yield filledTL).value.map(_.getOrElse(Map.empty))
 
   def getSuccessiveQuarters(ym1: YearMonth, ym2: YearMonth): List[Quarter] =
     getSuccessiveMonths(ym1, ym2).map(getQuarter).distinct

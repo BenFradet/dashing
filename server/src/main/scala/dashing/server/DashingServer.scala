@@ -20,6 +20,7 @@ import model.{DashingConfig, PageInfo}
 object DashingServer extends IOApp {
   import scala.concurrent.ExecutionContext.Implicits.global
   implicit val cs: ContextShift[IO] = IO.contextShift(global)
+  implicit val ymc: YearMonthClock[IO] = YearMonthClock.create[IO]
 
   override def run(args: List[String]): IO[ExitCode] = ServerStream.stream[IO].compile.lastOrError
 }
@@ -27,7 +28,7 @@ object DashingServer extends IOApp {
 object ServerStream {
 
   def stream[F[_]: ConcurrentEffect: ContextShift: Timer: Parallel1](
-    implicit ec: ExecutionContext
+    implicit ec: ExecutionContext, C: YearMonthClock[F]
   ): Stream[F, ExitCode] =
     ConfigFactory.load().as[DashingConfig] match {
       case Right(c) =>
