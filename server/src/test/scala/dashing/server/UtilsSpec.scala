@@ -4,6 +4,7 @@ import java.time.YearMonth
 
 import scala.concurrent.duration._
 
+import cats.Id
 import cats.effect.{IO, Timer}
 import cats.effect.laws.util.TestContext
 import cats.syntax.option._
@@ -16,9 +17,13 @@ import model._
 class UtilsSpec extends Specification with Http4sMatchers[IO] with IOMatchers {
   args(skipAll = sys.env.get("GITHUB_ACCESS_TOKEN").isEmpty)
 
+  implicit val ymClock = new YearMonthClock[Id] {
+    def now(): YearMonth = YearMonth.of(2019, 1)
+  }
+
   "utils.computeQuarterlyTimeline" should {
     "compute a quarterly count" in {
-      utils.computeQuarterlyTimeline(List("2018-01", "2018-12"), 365.days) must_== Map(
+      utils.computeQuarterlyTimeline[Id](List("2018-01", "2018-12"), 365.days) must_== Map(
         "2018 Q1" -> 1d,
         "2018 Q2" -> 0d,
         "2018 Q3" -> 0d,
@@ -27,17 +32,18 @@ class UtilsSpec extends Specification with Http4sMatchers[IO] with IOMatchers {
       )
     }
     "cutoff based on the lookback" in {
-      utils.computeQuarterlyTimeline(List("2018-01", "2018-05"), 1.day) must_==
+      utils.computeQuarterlyTimeline[Id](List("2018-01", "2018-05"), 1.day) must_==
         Map("2019 Q1" -> 0d)
     }
     "return an empty map if the timeline doesn't contain YYYY-MM" in {
-      utils.computeQuarterlyTimeline(List("test", "test2"), 365.days) must_== Map.empty
+      utils.computeQuarterlyTimeline[Id](List("test", "test2"), 365.days) must_== Map.empty
     }
   }
 
   "utils.computeMonthlyTimeline" should {
     "compute a monthly count" in {
-      utils.computeMonthlyTimeline(List("2018-01", "2018-05"), 365.days) must_== Map(
+      utils.computeMonthlyTimeline[Id](List("2018-01", "2018-05"), 365.days) must_== Map(
+        "2018-01" -> 1d,
         "2018-02" -> 0d,
         "2018-03" -> 0d,
         "2018-04" -> 0d,
@@ -50,14 +56,14 @@ class UtilsSpec extends Specification with Http4sMatchers[IO] with IOMatchers {
         "2018-11" -> 0d,
         "2018-12" -> 0d,
         "2019-01" -> 0d,
-        "2019-02" -> 0d,
       )
     }
     "cutoff based on the lookback" in {
-      utils.computeMonthlyTimeline(List("2018-01", "2018-05"), 1.day) must_== Map("2019-02" -> 0d)
+      utils.computeMonthlyTimeline[Id](
+        List("2018-01", "2018-05"), 1.day) must_== Map("2019-01" -> 0d)
     }
     "return an empty map if the timeline doesn't contain YYYY-MM" in {
-      utils.computeMonthlyTimeline(List("test", "test2"), 365.days) must_== Map.empty
+      utils.computeMonthlyTimeline[Id](List("test", "test2"), 365.days) must_== Map.empty
     }
   }
 
