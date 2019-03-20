@@ -7,7 +7,7 @@ import scala.concurrent.duration._
 import cats.effect.{IO, Timer}
 import cats.effect.laws.util.TestContext
 import cats.syntax.option._
-import io.chrisdavenport.mules.{Cache, TimeSpec}
+import io.chrisdavenport.mules._
 import org.http4s.testing.{Http4sMatchers, IOMatchers}
 import org.specs2.mutable.Specification
 
@@ -138,7 +138,8 @@ class UtilsSpec extends Specification with Http4sMatchers[IO] with IOMatchers {
       val key = "s"
       val prsInfo = PullRequestsInfo(List.empty, None, true)
       val setup = for {
-        cache <- Cache.createCache[IO, String, PageInfo](TimeSpec.unsafeFromDuration(1.second).some)
+        cache <- MemoryCache.createMemoryCache[IO, String, PageInfo](
+          TimeSpec.unsafeFromDuration(1.second).some)
         v1 <- utils.lookupOrInsert(cache)(key, IO.pure(prsInfo))
         v2 <- cache.lookup(key)
       } yield (v1, v2)
@@ -148,7 +149,8 @@ class UtilsSpec extends Specification with Http4sMatchers[IO] with IOMatchers {
       val key = "s"
       val prsInfo = PullRequestsInfo(List.empty, None, true)
       val setup = for {
-        cache <- Cache.createCache[IO, String, PageInfo](TimeSpec.unsafeFromDuration(1.second).some)
+        cache <- MemoryCache.createMemoryCache[IO, String, PageInfo](
+          TimeSpec.unsafeFromDuration(1.second).some)
         _ <- cache.insert(key, prsInfo)
         v1 <- utils.lookupOrInsert(cache)(key, IO.pure(prsInfo))
         v2 <- cache.lookup(key)

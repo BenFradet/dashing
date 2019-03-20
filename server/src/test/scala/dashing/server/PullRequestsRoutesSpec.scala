@@ -4,7 +4,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 import cats.effect.{ContextShift, IO}
-import io.chrisdavenport.mules.{Cache, TimeSpec}
+import io.chrisdavenport.mules._
 import org.http4s._
 import org.http4s.client.JavaNetClientBuilder
 import org.http4s.dsl.io._
@@ -21,7 +21,7 @@ class PullRequestsRoutesSpec extends Specification with IOMatchers {
   implicit val cs: ContextShift[IO] = IO.contextShift(global)
 
   def serve(req: Request[IO]): Response[IO] = (for {
-    cache <- Cache.createCache[IO, String, PageInfo](TimeSpec.fromDuration(12.hours))
+    cache <- MemoryCache.createMemoryCache[IO, String, PageInfo](TimeSpec.fromDuration(12.hours))
     client = JavaNetClientBuilder[IO](global).create
     graphQL = new GraphQL(client, sys.env.getOrElse("GITHUB_ACCESS_TOKEN", ""))
     service <- new PullRequestsRoutes[IO]()

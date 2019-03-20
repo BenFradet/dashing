@@ -7,7 +7,7 @@ import cats.effect._
 import cats.implicits._
 import com.typesafe.config.ConfigFactory
 import fs2.Stream
-import io.chrisdavenport.mules.{Cache, TimeSpec}
+import io.chrisdavenport.mules._
 import io.circe.generic.auto._
 import io.circe.config.syntax._
 import org.http4s.client.blaze.BlazeClientBuilder
@@ -33,7 +33,7 @@ object ServerStream {
       case Right(c) =>
         for {
           cache <- Stream.eval(
-            Cache.createCache[F, String, PageInfo](TimeSpec.fromDuration(c.cacheDuration)))
+            MemoryCache.createMemoryCache[F, String, PageInfo](TimeSpec.fromDuration(c.cacheDuration)))
           client <- BlazeClientBuilder[F](ec).stream
           graphQL = new GraphQL(client, c.ghToken)
           apiService =
