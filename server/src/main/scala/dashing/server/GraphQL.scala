@@ -78,7 +78,7 @@ class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClient
     val request = Request[F](
       method = Method.POST,
       uri = ghEndpoint,
-      headers = Headers(Header("Authorization", s"token $token"))
+      headers = Headers.of(Header("Authorization", s"token $token"))
     ).withEntity(query)
     client.expect[A](request)(jsonOf[F, A])
   }
