@@ -18,6 +18,15 @@ class PullRequestsRoutes[F[_]: Effect: Timer: Parallel1](
 ) extends Http4sDsl[F] {
   import PullRequestsRoutes._
 
+  /**
+   * Pull request routes, exposing:
+   * - /prs-monthly, for pull requests opened by non members grouped monthly
+   * - /prs-quarterly, for pull requests opened by non members grouped quarterly
+   * @param cache for already requested pull request information
+   * @param graphQL to interact with the github graphql API
+   * @param config pull request dashboards configuration
+   * @return http routes
+   */
   def routes(
     cache: Cache[F, String, PageInfo],
     graphQL: GraphQL[F],
@@ -42,6 +51,15 @@ class PullRequestsRoutes[F[_]: Effect: Timer: Parallel1](
 }
 
 object PullRequestsRoutes {
+  /**
+   * Get pull requests grouped by month
+   * @param cache for already requested pull request information
+   * @param graphQL to interact with the github graphql API
+   * @param orgs list of github organizations to retrieve the pull requests from
+   * @param lookback how far in time to look back for pull requests
+   * @param peopleToIgnore set of github logins to ignore when computing pull request counts
+   * @return a map of github organization to a map of month to number of pull requests in F
+   */
   def getMonthlyPRs[F[_]: Sync: Clock: Parallel1](
     cache: Cache[F, String, PageInfo],
     graphQL: GraphQL[F],
@@ -56,6 +74,15 @@ object PullRequestsRoutes {
     } yield org -> monthlyPRs
   }.map(_.toMap)
 
+  /**
+   * Get pull requests grouped by quarter
+   * @param cache for already requested pull request information
+   * @param graphQL to interact with the github graphql API
+   * @param orgs list of github organizations to retrieve the pull requests from
+   * @param lookback how far in time to look back for pull requests
+   * @param peopleToIgnore set of github logins to ignore when computing pull request counts
+   * @return a map of github organization to a map of quarter to number of pull requests in F
+   */
   def getQuarterlyPRs[F[_]: Sync: Clock: Parallel1](
     cache: Cache[F, String, PageInfo],
     graphQL: GraphQL[F],
@@ -70,6 +97,14 @@ object PullRequestsRoutes {
     } yield org -> monthlyPRs
   }.map(_.toMap)
 
+  /**
+   * Get pull requests for an organization by traversing every repositories for an organization
+   * @param cache for already requested pull request information
+   * @param graphQL to interact with the github graphql API
+   * @param org github organization to retrieve the pull requests from
+   * @param peopleToIgnore set of github logins to ignore when computing pull request counts
+   * @return pull requests information for the specified organization in F
+   */
   def getPRs[F[_]: Sync: Clock: Parallel1](
     cache: Cache[F, String, PageInfo],
     graphQL: GraphQL[F],
