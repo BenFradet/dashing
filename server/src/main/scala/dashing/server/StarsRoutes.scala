@@ -16,6 +16,15 @@ import Parallel1.parallelFromParallel1
 class StarsRoutes[F[_]: Effect: Timer: Parallel1] extends Http4sDsl[F] {
   import StarsRoutes._
 
+  /**
+   * Stars routes, exposing:
+   * - /stars/top-n, for a star timeline regarding the n most starred repositories
+   * - /stars/hero-repo, for a star timeline regarding the hero repository
+   * @param cache for already requested star information
+   * @param graphQL to interact with the github graphql API
+   * @param config stars dashboards configuration
+   * @return http routes
+   */
   def routes(
     cache: Cache[F, String, PageInfo],
     graphQL: GraphQL[F],
@@ -38,6 +47,18 @@ class StarsRoutes[F[_]: Effect: Timer: Parallel1] extends Http4sDsl[F] {
 }
 
 object StarsRoutes {
+  /**
+   * Get a star timeline for the n most starred repositories, the others being grouped as one
+   * timeline
+   * @param cache for already requested star information
+   * @param graphQL to interact with the github graphql API
+   * @param org the github organization in which to look for star timelines
+   * @param n the n most starred repositories will be presented as individiual timelines while the
+   * others will be grouped together as one timeline
+   * @param heroRepo the name of the hero repository
+   * @param minStarsThreshold the minimum number of stars for a repository to be part of a timeline
+   * @return a [[Repos]] which contains the top n star timelines in F
+   */
   def getTopN[F[_]: Sync: Clock: Parallel1](
     cache: Cache[F, String, PageInfo],
     graphQL: GraphQL[F],
@@ -63,6 +84,15 @@ object StarsRoutes {
     )
   } yield Repos(others :: topN)
 
+  /**
+   * Get a star timeline for a repository
+   * @param cache for already requested star information
+   * @param graphQL to interact with the github graphql API
+   * @param org the github organization in which to look for star timelines
+   * @param name of the repository
+   * @return a [[Repo]] which contains the specified repository's star timeline as well as current
+   * number of stars in F
+   */
   def getStars[F[_]: Sync : Clock](
     cache: Cache[F, String, PageInfo],
     graphQL: GraphQL[F],
