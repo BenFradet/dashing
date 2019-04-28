@@ -27,6 +27,7 @@ object DashingServer extends IOApp {
 
 object ServerStream {
 
+  /** Entry point to the server */
   def stream[F[_]: ConcurrentEffect: ContextShift: Timer: Parallel1](
     implicit ec: ExecutionContext, C: YearMonthClock[F]
   ): Stream[F, ExitCode] =
