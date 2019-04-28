@@ -15,9 +15,21 @@ import org.http4s.client.Client
 
 import model._
 
+/**
+ * Class designed to interact with github's graphql API using http4s' HTTP [[Client]].
+ * @param client http4s' HTTP [[Client]]
+ * @param token a github API access token
+ */
 class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClientDsl[F] {
   import GraphQL._
 
+  /**
+   * List pull requests in any state in the https://github.com/owner/name repository.
+   * @param owner of the repository
+   * @param name of the repository
+   * @return pull requests information necessary to the dashboards (creation timestamp and author
+   * at the moment) in F
+   */
   def getPRs(owner: String, name: String): F[PullRequestsInfo] = for {
     prs <- autoPaginate((p: Pagination) => getPRsWithPagination(owner, name)(p))
     finalInfo = Monoid.combineAll(prs)
@@ -32,6 +44,13 @@ class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClient
     request(Query(query))
   }
 
+  /**
+   * List the stargazers for the https://github.com/owner/name repository.
+   * @param owner of the repository
+   * @param name of the repository
+   * @return stargazers information necessary to the dashboards (starring timestamp at the moment)
+   * in F
+   */
   def listStargazers(owner: String, name: String): F[StarsInfo] = for {
     prs <- autoPaginate((p: Pagination) => listStargazersWithPagination(owner, name)(p))
     finalInfo = Monoid.combineAll(prs)
@@ -46,6 +65,12 @@ class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClient
     request(Query(query))
   }
 
+  /**
+   * List members for the https://github.com/org organization.
+   * @param org organization
+   * @return name of the organization members, necessary to exclude members from pull requests
+   * counts in F
+   */
   def getOrgMembers(org: String): F[OrgMembersInfo] = for {
     members <- autoPaginate((p: Pagination) => getOrgMembersWithPagination(org)(p))
     finalInfo = Monoid.combineAll(members)
@@ -60,6 +85,12 @@ class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClient
     request(Query(query))
   }
 
+  /**
+   * List repositories for the https://github.com/org organization.
+   * @param org organization
+   * @return names of the organization repositories, necessary to count pull requests and stars for
+   * each of them in F
+   */
   def getOrgRepositories(org: String): F[OrgRepositoriesInfo] = for {
     repositories <- autoPaginate((p: Pagination) => getOrgRepositoriesWithPagination(org)(p))
     finalInfo = Monoid.combineAll(repositories)
@@ -87,8 +118,17 @@ class GraphQL[F[_]: Sync](client: Client[F], token: String) extends Http4sClient
 object GraphQL {
   val ghEndpoint = Uri.uri("https://api.github.com/graphql")
 
+  /** Case class representing a GraphQL query */
   final case class Query(query: String)
+  /** Case class representing pagination information as given back by the github API */
+  final case class Pagination(size: Int, cursor: Option[String])
 
+  /**
+   * Auto-paginate a call to the github graphql API using [[fs2.Pull]].
+   * Pagination limits are set to 100 per call according to the graphql API limits.
+   * @param call function from a [[Pagination]] to a [[PageInfo]] in F to auto paginate
+   * @return the auto-paginated list of [[PageInfo]] in F
+   */
   def autoPaginate[F[_]: Sync, T <: PageInfo](call: Pagination => F[T]): F[List[T]] = for {
     first <- call(Pagination(100, None))
     rest <-
@@ -113,6 +153,4 @@ object GraphQL {
           )
         }
     }
-
-  final case class Pagination(size: Int, cursor: Option[String])
 }
