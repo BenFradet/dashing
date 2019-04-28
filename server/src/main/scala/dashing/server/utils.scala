@@ -17,6 +17,12 @@ import model._
 
 object utils {
 
+  /**
+   * Compute an event timeline by month
+   * @param timeline a list of month timestamps
+   * @return a timeline which takes the form of a map of month to number of events and the
+   * cumulative number of events
+   */
   def computeCumulativeMonthlyTimeline(timeline: List[String]): (Map[String, Double], Int) = (for {
     min <- timeline.minimumOption
     max <- timeline.maximumOption
@@ -28,6 +34,12 @@ object utils {
     dataPoints = filledTL._1.map(t => t._1 -> t._2.toDouble).toMap
   } yield (dataPoints, filledTL._2)).getOrElse((Map.empty, 0))
 
+  /**
+   * Compute an event timeline by month
+   * @param timeline a list of month timestamps
+   * @param lookback how far to lookback when computing the timeline
+   * @return a timeline which takes the form of a map of month to number of events in F
+   */
   def computeMonthlyTimeline[F[_]: Monad](
     timeline: List[String],
     lookback: FiniteDuration
@@ -44,6 +56,12 @@ object utils {
     filledTL = successiveMonths.map(e => e.toString -> counts.getOrElse(e, 0).toDouble).toMap
   } yield filledTL).value.map(_.getOrElse(Map.empty))
 
+  /**
+   * Compute an event timeline by quarter
+   * @param timeline a list of quarter timestamps
+   * @param lookback how far to lookback when computing the timeline
+   * @return a timeline which takes the form of a map of month to number of events in F
+   */
   def computeQuarterlyTimeline[F[_]: Monad](
     timeline: List[String],
     lookback: FiniteDuration
@@ -60,12 +78,15 @@ object utils {
     filledTL = successiveQuarters.map(e => e.toString -> counts.getOrElse(e, 0).toDouble).toMap
   } yield filledTL).value.map(_.getOrElse(Map.empty))
 
+  /** Get all the quarters between two [[YearMonth]]s */
   def getSuccessiveQuarters(ym1: YearMonth, ym2: YearMonth): List[Quarter] =
     getSuccessiveMonths(ym1, ym2).map(getQuarter).distinct
 
+  /** Extract the quarter from a [[YearMonth]] */
   def getQuarter(ym: YearMonth): Quarter =
     Quarter(ym.getYear, ym.atEndOfMonth.get(IsoFields.QUARTER_OF_YEAR))
 
+  /** Get all the months between two [[YearMonth]]s */
   def getSuccessiveMonths(ym1: YearMonth, ym2: YearMonth): List[YearMonth] =
     (if (ym1.isBefore(ym2)) {
       Stream.iterate(ym1)(_.plusMonths(1)).takeWhile(!_.isAfter(ym2))
@@ -73,6 +94,7 @@ object utils {
       Stream.iterate(ym2)(_.plusMonths(1)).takeWhile(!_.isAfter(ym1))
     }).toList
 
+  /** Form a full timeline from a sparse timeline by cumulating counts */
   def fillCumulativeTimeline[T](timeline: List[T], counts: Map[T, Int]): (List[(T, Int)], Int) = {
     val tl = timeline.foldLeft((List.empty[(T, Int)], 0)) { case ((acc, cnt), e) =>
       val c = counts.getOrElse(e, cnt)
@@ -92,6 +114,13 @@ object utils {
       m + (e -> (m.getOrElse(e, 0) + 1))
     }
 
+  /**
+   * Lookup a data point in the cache, if it's not present insert it
+   * @param cache to lookup or insert into
+   * @param k key to lookup in the cache
+   * @param v value to insert if missing in F
+   * @return the value, whether looked up or inserted
+   */
   def lookupOrInsert[F[_]: Sync : Clock, K, PI <: PageInfo: ClassTag](
     c: Cache[F, K, PageInfo]
   )(k: K, v: F[PI]): F[PI] = for {
