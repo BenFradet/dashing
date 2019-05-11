@@ -21,7 +21,7 @@ lazy val sharedJVM = shared.jvm.settings(name := "sharedJVM")
 lazy val sharedJS = shared.js.settings(name := "sharedJS")
 
 lazy val scalajsDomVersion = "0.9.7"
-lazy val scalajsReactVersion = "1.4.1"
+lazy val scalajsReactVersion = "1.4.2"
 lazy val reactVersion = "16.7.0"
 lazy val chartjsVersion = "2.7.2"
 
