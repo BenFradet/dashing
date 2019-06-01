@@ -28,6 +28,10 @@ of time quarterly:
 
 ![quarterly-prs](https://github.com/BenFradet/dashing/raw/master/screenshots/prs-quarterly.png)
 
+There is also a dashboard who groups opened PRs by month:
+
+![monthly-prs](https://github.com/BenFradet/dashing/raw/master/screenshots/prs-monthly.png)
+
 ## How to use it
 
 If you want to use it for your own organization, you can pass a custom
