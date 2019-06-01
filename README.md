@@ -21,12 +21,12 @@ the hero repo) as a function of time:
 
 ![topn-repos](https://github.com/BenFradet/dashing/raw/master/screenshots/top_n_repos_stars.png)
 
-### Open pull requests
+### Number of pull request opened
 
-The number of open pull requests created by people inside and outside the organization as a function
-of time:
+The number of open pull requests created by people outside the organization as a function
+of time quarterly:
 
-![opened-prs](https://github.com/BenFradet/dashing/raw/master/screenshots/opened_prs.png)
+![quarterly-prs](https://github.com/BenFradet/dashing/raw/master/screenshots/prs-quarterly.png)
 
 ## How to use it
 
