@@ -35,7 +35,7 @@ object HeroRepoDashboard {
           ChartData(
             s.starsTimeline.keys.toSeq.sorted,
             Seq(
-              ChartDataset(
+              ChartDatasetFlat(
                 s.starsTimeline.toList.sortBy(_._1).map(_._2),
                 s"${s.name}",
                 "#0E0B16"

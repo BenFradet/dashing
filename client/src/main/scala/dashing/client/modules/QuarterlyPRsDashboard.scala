@@ -46,7 +46,7 @@ object QuarterlyPRsDashboard {
             s.prsByOrg
               .zip(Stream.continually(colors).flatten)
               .map { case ((org, prs), bgc) =>
-                ChartDataset(
+                ChartDatasetFlat(
                   prs.toList.sortBy(_._1).map(_._2),
                   org,
                   "rgba(0, 0, 0, 0)",

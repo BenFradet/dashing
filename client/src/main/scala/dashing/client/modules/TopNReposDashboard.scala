@@ -34,13 +34,15 @@ object TopNReposDashboard {
       <.div(^.cls := "container",
         <.h2("Top N repos dashboard"),
         Chart(Chart.ChartProps(
-          s"Top ${s.size - 1} repos stars",
+          s"Top ${s.size} repos stars",
           Chart.LineChart,
           ChartData(
             s.headOption.map(_.starsTimeline.keys.toSeq.sorted).getOrElse(Seq.empty),
             s.zip(Stream.continually(colors).flatten).map { case (r, c) =>
-              ChartDataset(
-                r.starsTimeline.toList.sortBy(_._1).map(_._2),
+              ChartDatasetPoint({
+                  println(r.starsTimeline.toList.sortBy(_._1).map(_._1))
+                  r.starsTimeline.toList.sortBy(_._1).map { case (x, y) => PointData(x, y) }
+                },
                 s"${r.name}",
                 c
               )
