@@ -12,14 +12,14 @@ As a first step, this project incorporates the following set of dashboards:
 
 The evolution of the number of stars of your "hero" repository as a function of time:
 
-![hero-repo](https://github.com/BenFradet/dashing/raw/master/screenshots/hero_repo_stars.png)
+![hero-repo](https://github.com/BenFradet/dashing/raw/master/screenshots/stars-hero.png)
 
 ### Other repos stars
 
 The evolution of the number of stars of the top 5 repositories inside the organization (excluding
 the hero repo) as a function of time:
 
-![topn-repos](https://github.com/BenFradet/dashing/raw/master/screenshots/top_n_repos_stars.png)
+![topn-repos](https://github.com/BenFradet/dashing/raw/master/screenshots/stars-top-n.png)
 
 ### Number of pull request opened
 
