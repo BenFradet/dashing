@@ -19,28 +19,56 @@ object PointData {
 }
 
 @js.native
-trait ChartDataset extends js.Object {
+sealed trait ChartDataset extends js.Any
+
+@js.native
+trait ChartDatasetPoint extends js.Object with ChartDataset {
   def label: String = js.native
-  def data: js.Array[Double] = js.native
+  def data: js.Array[PointData] = js.native
   def borderColor: String = js.native
   def backgroundColor: String = js.native
   def borderWidth : Int = js.native
 }
-object ChartDataset {
+object ChartDatasetPoint {
   def apply(
-    data: Seq[Double],
+    data: Seq[PointData],
     label: String,
     borderColor: String = "#408080",
     backgroundColor: String = "rgba(0, 0, 0, 0)",
     borderWidth: Int = 2
-  ): ChartDataset =
+  ): ChartDatasetPoint =
     js.Dynamic.literal(
       label = label,
       data = data.toJSArray,
       borderColor = borderColor,
       backgroundColor = backgroundColor,
       borderWidth = borderWidth
-    ).asInstanceOf[ChartDataset]
+    ).asInstanceOf[ChartDatasetPoint]
+}
+
+@js.native
+trait ChartDatasetFlat extends js.Object with ChartDataset {
+  def label: String = js.native
+  def data: js.Array[Double] = js.native
+  def borderColor: String = js.native
+  def backgroundColor: String = js.native
+  def borderWidth : Int = js.native
+}
+object ChartDatasetFlat {
+  def apply(
+    data: Seq[Double],
+    label: String,
+    borderColor: String = "#408080",
+    backgroundColor: String = "rgba(0, 0, 0, 0)",
+    borderWidth: Int = 2
+  ): ChartDatasetFlat =
+    js.Dynamic.literal(
+      label = label,
+      data = data.toJSArray,
+      borderColor = borderColor,
+      backgroundColor = backgroundColor,
+      borderWidth = borderWidth
+    ).asInstanceOf[ChartDatasetFlat]
 }
 
 @js.native
