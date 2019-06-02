@@ -39,10 +39,8 @@ object TopNReposDashboard {
           ChartData(
             s.headOption.map(_.starsTimeline.keys.toSeq.sorted).getOrElse(Seq.empty),
             s.zip(Stream.continually(colors).flatten).map { case (r, c) =>
-              ChartDatasetPoint({
-                  println(r.starsTimeline.toList.sortBy(_._1).map(_._1))
-                  r.starsTimeline.toList.sortBy(_._1).map { case (x, y) => PointData(x, y) }
-                },
+              ChartDatasetPoint(
+                r.starsTimeline.toList.sortBy(_._1).map { case (x, y) => PointData(x, y) },
                 s"${r.name}",
                 c
               )
