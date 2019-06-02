@@ -1,7 +1,6 @@
 package dashing
 package server
 
-import cats.Monoid
 import cats.effect.{Clock, Effect, Sync, Timer}
 import cats.implicits._
 import io.chrisdavenport.mules.Cache
@@ -65,7 +64,7 @@ object StarsRoutes {
     org: String,
     n: Int,
     heroRepo: String,
-    minStarsThreshold: Int = 10
+    minStarsThreshold: Int = 50
   ): F[Repos] = for {
     rs <- utils.lookupOrInsert(cache)(s"repos-$org", graphQL.getOrgRepositories(org))
     repos = rs.repositoriesAndStars
@@ -77,12 +76,7 @@ object StarsRoutes {
     }
     sorted = stars.sortBy(-_.stars)
     topN = sorted.take(n)
-    othersCombined = Monoid.combineAll(sorted.drop(n))
-    others = othersCombined.copy(
-      name = "others",
-      starsTimeline = othersCombined.starsTimeline.toList.sortBy(_._1).dropRight(1).toMap
-    )
-  } yield Repos(others :: topN)
+  } yield Repos(topN)
 
   /**
    * Get a star timeline for a repository
