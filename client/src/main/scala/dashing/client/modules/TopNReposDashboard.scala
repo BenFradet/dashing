@@ -34,7 +34,7 @@ object TopNReposDashboard {
       <.div(^.cls := "container",
         <.h2("Top N repos dashboard"),
         Chart(Chart.ChartProps(
-          s"Top ${s.size} repos stars",
+          s"Top ${s.size - 1} repos stars",
           Chart.LineChart,
           ChartData(
             s.headOption.map(_.starsTimeline.keys.toSeq.sorted).getOrElse(Seq.empty),
