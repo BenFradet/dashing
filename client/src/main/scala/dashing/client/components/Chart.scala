@@ -9,6 +9,16 @@ import scala.scalajs.js.JSConverters._
 import scala.scalajs.js.annotation.JSGlobal
 
 @js.native
+trait PointData extends js.Object {
+  def x: String = js.native
+  def y: Double = js.native
+}
+object PointData {
+  def apply(x: String, y: Double): PointData =
+    js.Dynamic.literal(x = x, y = y).asInstanceOf[PointData]
+}
+
+@js.native
 trait ChartDataset extends js.Object {
   def label: String = js.native
   def data: js.Array[Double] = js.native
