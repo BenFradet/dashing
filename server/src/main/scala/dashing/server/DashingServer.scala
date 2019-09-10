@@ -3,6 +3,7 @@ package dashing.server
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
+import cats.Parallel
 import cats.effect._
 import cats.implicits._
 import com.typesafe.config.ConfigFactory
@@ -28,7 +29,7 @@ object DashingServer extends IOApp {
 object ServerStream {
 
   /** Entry point to the server */
-  def stream[F[_]: ConcurrentEffect: ContextShift: Timer: Parallel1](
+  def stream[F[_]: ConcurrentEffect: ContextShift: Timer: Parallel](
     implicit ec: ExecutionContext, C: YearMonthClock[F]
   ): Stream[F, ExitCode] =
     ConfigFactory.load().as[DashingConfig] match {

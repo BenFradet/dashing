@@ -2,7 +2,7 @@ package dashing.server
 
 import scala.concurrent.duration.FiniteDuration
 
-import cats.Monoid
+import cats.{Monoid, Parallel}
 import cats.effect.{Clock, Effect, Sync, Timer}
 import cats.implicits._
 import io.chrisdavenport.mules.Cache
@@ -11,9 +11,8 @@ import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 
 import model._
-import Parallel1.parallelFromParallel1
 
-class PullRequestsRoutes[F[_]: Effect: Timer: Parallel1](
+class PullRequestsRoutes[F[_]: Effect: Timer: Parallel](
   implicit C: YearMonthClock[F]
 ) extends Http4sDsl[F] {
   import PullRequestsRoutes._
@@ -60,7 +59,7 @@ object PullRequestsRoutes {
    * @param peopleToIgnore set of github logins to ignore when computing pull request counts
    * @return a map of github organization to a map of month to number of pull requests in F
    */
-  def getMonthlyPRs[F[_]: Sync: Clock: Parallel1](
+  def getMonthlyPRs[F[_]: Sync: Clock: Parallel](
     cache: Cache[F, String, PageInfo],
     graphQL: GraphQL[F],
     orgs: List[String],
@@ -83,7 +82,7 @@ object PullRequestsRoutes {
    * @param peopleToIgnore set of github logins to ignore when computing pull request counts
    * @return a map of github organization to a map of quarter to number of pull requests in F
    */
-  def getQuarterlyPRs[F[_]: Sync: Clock: Parallel1](
+  def getQuarterlyPRs[F[_]: Sync: Clock: Parallel](
     cache: Cache[F, String, PageInfo],
     graphQL: GraphQL[F],
     orgs: List[String],
@@ -105,7 +104,7 @@ object PullRequestsRoutes {
    * @param peopleToIgnore set of github logins to ignore when computing pull request counts
    * @return pull requests information for the specified organization in F
    */
-  def getPRs[F[_]: Sync: Clock: Parallel1](
+  def getPRs[F[_]: Sync: Clock: Parallel](
     cache: Cache[F, String, PageInfo],
     graphQL: GraphQL[F],
     org: String,

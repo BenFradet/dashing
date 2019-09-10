@@ -1,6 +1,7 @@
 package dashing
 package server
 
+import cats.Parallel
 import cats.effect.{Clock, Effect, Sync, Timer}
 import cats.implicits._
 import io.chrisdavenport.mules.Cache
@@ -10,9 +11,8 @@ import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 
 import model._
-import Parallel1.parallelFromParallel1
 
-class StarsRoutes[F[_]: Effect: Timer: Parallel1] extends Http4sDsl[F] {
+class StarsRoutes[F[_]: Effect: Timer: Parallel] extends Http4sDsl[F] {
   import StarsRoutes._
 
   /**
@@ -58,7 +58,7 @@ object StarsRoutes {
    * @param minStarsThreshold the minimum number of stars for a repository to be part of a timeline
    * @return a [[Repos]] which contains the top n star timelines in F
    */
-  def getTopN[F[_]: Sync: Clock: Parallel1](
+  def getTopN[F[_]: Sync: Clock: Parallel](
     cache: Cache[F, String, PageInfo],
     graphQL: GraphQL[F],
     org: String,

@@ -77,7 +77,8 @@ lazy val scalatagsVersion = "0.7.0"
 lazy val mulesVersion = "0.2.1"
 lazy val logbackVersion = "1.2.3"
 lazy val specs2Version = "4.7.0"
-lazy val catsVersion = "1.6.1"
+lazy val catsVersion = "2.0.0"
+lazy val catsEffectVersion = "2.0.0"
 
 lazy val server = project.in(file("server"))
   .settings(baseSettings)
@@ -92,6 +93,7 @@ lazy val server = project.in(file("server"))
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
     ).map(_ % circeVersion) ++ Seq(
+      "org.typelevel" %% "cats-effect" % catsEffectVersion,
       "com.lihaoyi" %% "scalatags" % scalatagsVersion,
       "io.circe" %% "circe-config" % circeConfigVersion,
       "io.chrisdavenport" %% "mules" % mulesVersion,
@@ -102,7 +104,7 @@ lazy val server = project.in(file("server"))
     ).map(_ % specs2Version) ++ Seq(
       "org.http4s" %% "http4s-testing" % http4sVersion,
       "org.typelevel" %% "cats-laws" % catsVersion,
-    )).map(_ % "test")
+    )).map(_ % Test)
   )
   .settings(
     // lets us access client-fastopt.js
