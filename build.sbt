@@ -71,7 +71,7 @@ dockerExposedVolumes := Seq("/dashing/config")
 maintainer in Docker := "Ben Fradet <https://github.com/BenFradet>"
 
 lazy val http4sVersion = "0.20.10"
-lazy val circeVersion = "0.11.1"
+lazy val circeVersion = "0.12.1"
 lazy val circeConfigVersion = "0.6.1"
 lazy val scalatagsVersion = "0.7.0"
 lazy val mulesVersion = "0.2.1"
