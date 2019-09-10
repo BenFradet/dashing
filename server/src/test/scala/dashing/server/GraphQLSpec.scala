@@ -29,7 +29,7 @@ class GraphQLSpec extends Specification with IOMatchers {
 
     "get org members of a particular org with pagination" in {
       val members = graphQL.getOrgMembers("snowplow").unsafeRunSync
-      members.members.size must be_>(5)
+      members.members.size must be_>(4)
     }
 
     "get org repositories of a particular org with pagination" in {
