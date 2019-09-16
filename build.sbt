@@ -76,7 +76,7 @@ lazy val circeConfigVersion = "0.7.0"
 lazy val scalatagsVersion = "0.7.0"
 lazy val mulesVersion = "0.2.1"
 lazy val logbackVersion = "1.2.3"
-lazy val specs2Version = "4.7.0"
+lazy val specs2Version = "4.7.1"
 lazy val catsVersion = "2.0.0"
 lazy val catsEffectVersion = "2.0.0"
 
